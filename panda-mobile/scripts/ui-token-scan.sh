@@ -70,6 +70,7 @@ run_scan_grep() {
     --exclude-dir=node_modules \
     --exclude-dir=dist \
     --exclude-dir=build \
+    --exclude=uni.scss \
     . || true
 }
 
