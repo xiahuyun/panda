@@ -1,0 +1,24 @@
+<template>
+	<view>
+		<image class="logo" src="/static/logo.png"></image>
+		<text class="title">{{title}}</text>
+	</view>
+</template>
+
+<script setup lang="uts">
+	const title = ref('Hello')
+</script>
+
+<style>
+	.logo {
+		height: 100px;
+		width: 100px;
+		margin: 100px auto 25px auto; /* ui-lint-disable-line reason: starter template legacy style, ticket: PANDA-BOOTSTRAP */
+	}
+
+	.title {
+		font-size: 18px; /* ui-lint-disable-line reason: starter template legacy style, ticket: PANDA-BOOTSTRAP */
+		color: #8f8f94; /* ui-lint-disable-line reason: starter template legacy style, ticket: PANDA-BOOTSTRAP */
+		text-align: center;
+	}
+</style>
