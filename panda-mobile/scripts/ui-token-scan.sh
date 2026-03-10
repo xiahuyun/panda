@@ -22,6 +22,7 @@ TARGET_GLOBS=(
 EXCLUDE_GLOBS=(
   "!docs/**"
   "!tokens/**"
+  "!theme/**"
   "!scripts/**"
   "!unpackage/**"
   "!node_modules/**"
@@ -63,6 +64,7 @@ run_scan_grep() {
     --include="*.uts" \
     --exclude-dir=docs \
     --exclude-dir=tokens \
+    --exclude-dir=theme \
     --exclude-dir=scripts \
     --exclude-dir=unpackage \
     --exclude-dir=node_modules \

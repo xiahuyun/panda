@@ -1,24 +1,289 @@
 <template>
-	<view>
-		<image class="logo" src="/static/logo.png"></image>
-		<text class="title">{{title}}</text>
-	</view>
+	<scroll-view class="page" scroll-y="true">
+		<view class="hero">
+			<text class="hero__title">Panda Mobile Business Demo</text>
+			<text class="hero__subtitle">登录 + 缘分墙 + 聊天输入栏（Mock Data）</text>
+		</view>
+
+		<view class="section">
+			<text class="section__title">登录卡片</text>
+			<LoginCard
+				:phone="loginPhone"
+				:code="loginCode"
+				:statusText="loginStatus"
+				:submitting="loginSubmitting"
+				@update:phone="onPhoneChange"
+				@update:code="onCodeChange"
+				@submit="onLoginSubmit"
+			/>
+		</view>
+
+		<view class="section">
+			<view class="section__header">
+				<text class="section__title">缘分墙卡片</text>
+				<view class="mode-switch">
+					<button class="mode-switch__button" @tap="loadAffinityWall('content')">Content</button>
+					<button class="mode-switch__button" @tap="loadAffinityWall('empty')">Empty</button>
+					<button class="mode-switch__button" @tap="loadAffinityWall('error')">Error</button>
+				</view>
+			</view>
+			<AffinityWallCard
+				:state="wallState"
+				:name="wallProfile.name"
+				:meta="wallProfile.meta"
+				:bio="wallProfile.bio"
+				:reason="wallProfile.reason"
+				:errorText="wallError"
+				avatarUrl="/static/logo.png"
+				@reload="onWallReload"
+				@refresh="onWallRefresh"
+			/>
+		</view>
+
+		<view class="section">
+			<text class="section__title">聊天输入栏 + Mock 对话流</text>
+			<view class="chat-card">
+				<view v-if="chatState == 'loading'" class="chat-placeholder">
+					<text class="chat-placeholder__text">正在加载聊天记录...</text>
+				</view>
+				<view v-else-if="chatState == 'error'" class="chat-placeholder">
+					<text class="chat-placeholder__text">加载失败：{{ chatError }}</text>
+					<button class="chat-retry" @tap="loadChatMessages">重试</button>
+				</view>
+				<view v-else>
+					<ChatBubble
+						v-for="item in chatMessages"
+						:key="item.id"
+						:sender="item.sender"
+						:text="item.text"
+						:direction="item.direction"
+					/>
+				</view>
+				<ChatInputBar :value="chatDraft" :sending="chatSending" @update:value="onChatDraftChange" @send="onSendChat" />
+				<text class="section__hint">{{ chatStatus }}</text>
+			</view>
+		</view>
+	</scroll-view>
 </template>
 
 <script setup lang="uts">
-	const title = ref('Hello')
+import LoginCard from "../../components/LoginCard.uvue"
+import AffinityWallCard from "../../components/AffinityWallCard.uvue"
+import ChatBubble from "../../components/ChatBubble.uvue"
+import ChatInputBar from "../../components/ChatInputBar.uvue"
+import { login, fetchAffinityWall, fetchChatMessages, sendChatMessage } from "../../services/mock/panda-mock-service.uts"
+
+const loginPhone = ref("13800138000")
+const loginCode = ref("1234")
+const loginStatus = ref("尚未登录")
+const loginSubmitting = ref(false)
+
+const wallState = ref("loading")
+const wallError = ref("")
+const wallProfile = ref({
+	name: "",
+	meta: "",
+	bio: "",
+	reason: ""
+})
+
+const chatState = ref("loading")
+const chatMessages = ref([])
+const chatDraft = ref("")
+const chatSending = ref(false)
+const chatStatus = ref("可以发送新消息")
+const chatError = ref("")
+
+const onPhoneChange = (value) => {
+	loginPhone.value = value
+}
+
+const onCodeChange = (value) => {
+	loginCode.value = value
+}
+
+const onLoginSubmit = () => {
+	if (loginSubmitting.value) {
+		return
+	}
+	loginSubmitting.value = true
+	loginStatus.value = "登录中..."
+	login(loginPhone.value, loginCode.value)
+		.then(() => {
+			loginStatus.value = "登录成功，欢迎回来"
+			loadAffinityWall("content")
+			loadChatMessages()
+		})
+		.catch((error) => {
+			loginStatus.value = error
+		})
+		.finally(() => {
+			loginSubmitting.value = false
+		})
+}
+
+const loadAffinityWall = (mode) => {
+	wallState.value = "loading"
+	wallError.value = ""
+	fetchAffinityWall(mode)
+		.then((result) => {
+			if (result.state == "empty") {
+				wallState.value = "empty"
+				return
+			}
+			wallProfile.value = result.profile
+			wallState.value = "content"
+		})
+		.catch((error) => {
+			wallState.value = "error"
+			wallError.value = error
+		})
+}
+
+const onWallReload = () => {
+	loadAffinityWall("content")
+}
+
+const onWallRefresh = () => {
+	loadAffinityWall("content")
+}
+
+const loadChatMessages = () => {
+	chatState.value = "loading"
+	chatError.value = ""
+	fetchChatMessages()
+		.then((result) => {
+			chatMessages.value = result.list
+			chatState.value = "content"
+			chatStatus.value = "聊天已就绪"
+		})
+		.catch((error) => {
+			chatState.value = "error"
+			chatError.value = error
+		})
+}
+
+const onChatDraftChange = (value) => {
+	chatDraft.value = value
+}
+
+const onSendChat = () => {
+	if (chatSending.value || chatState.value != "content") {
+		return
+	}
+	chatSending.value = true
+	sendChatMessage(chatDraft.value)
+		.then((message) => {
+			chatMessages.value = [...chatMessages.value, message]
+			chatDraft.value = ""
+			chatStatus.value = "消息已发送"
+		})
+		.catch((error) => {
+			chatStatus.value = error
+		})
+		.finally(() => {
+			chatSending.value = false
+		})
+}
+
+loadAffinityWall("content")
+loadChatMessages()
 </script>
 
 <style>
-	.logo {
-		height: 100px;
-		width: 100px;
-		margin: 100px auto 25px auto; /* ui-lint-disable-line reason: starter template legacy style, ticket: PANDA-BOOTSTRAP */
+	.page {
+		height: 100%;
+		padding: var(--space-4);
+		background-color: var(--semantic-bg-app);
 	}
 
-	.title {
-		font-size: 18px; /* ui-lint-disable-line reason: starter template legacy style, ticket: PANDA-BOOTSTRAP */
-		color: #8f8f94; /* ui-lint-disable-line reason: starter template legacy style, ticket: PANDA-BOOTSTRAP */
-		text-align: center;
+	.hero {
+		margin-bottom: var(--space-6);
+		padding: var(--space-4);
+		border-radius: var(--radius-md);
+		background-color: var(--semantic-bg-surface);
+	}
+
+	.hero__title {
+		color: var(--semantic-text-primary);
+		font-size: var(--font-size-2xl);
+		font-weight: var(--font-weight-bold);
+		line-height: var(--line-height-tight);
+	}
+
+	.hero__subtitle {
+		margin-top: var(--space-2);
+		color: var(--semantic-text-secondary);
+		font-size: var(--font-size-md);
+		font-weight: var(--font-weight-regular);
+	}
+
+	.section {
+		margin-bottom: var(--space-6);
+	}
+
+	.section__header {
+		margin-bottom: var(--space-3);
+	}
+
+	.section__title {
+		margin-bottom: var(--space-3);
+		color: var(--semantic-text-secondary);
+		font-size: var(--font-size-sm);
+		font-weight: var(--font-weight-bold);
+	}
+
+	.section__hint {
+		margin-top: var(--space-2);
+		margin-left: var(--space-2);
+		color: var(--semantic-text-secondary);
+		font-size: var(--font-size-sm);
+	}
+
+	.mode-switch {
+		flex-direction: row;
+		gap: var(--space-2);
+	}
+
+	.mode-switch__button {
+		padding-top: var(--space-2);
+		padding-right: var(--space-3);
+		padding-bottom: var(--space-2);
+		padding-left: var(--space-3);
+		border-radius: var(--radius-full);
+		background-color: var(--semantic-bg-surface-muted);
+		color: var(--semantic-text-secondary);
+		font-size: var(--font-size-xs);
+		font-weight: var(--font-weight-bold);
+		border: none;
+	}
+
+	.chat-card {
+		padding: var(--space-4);
+		border-radius: var(--radius-md);
+		background-color: var(--semantic-bg-surface);
+	}
+
+	.chat-placeholder {
+		margin-bottom: var(--space-4);
+		padding: var(--space-4);
+		border-radius: var(--radius-md);
+		background-color: var(--semantic-bg-surface-muted);
+	}
+
+	.chat-placeholder__text {
+		color: var(--semantic-text-secondary);
+		font-size: var(--font-size-sm);
+	}
+
+	.chat-retry {
+		margin-top: var(--space-2);
+		height: var(--space-12);
+		border-radius: var(--radius-full);
+		background-color: var(--semantic-bg-surface);
+		color: var(--semantic-text-secondary);
+		font-size: var(--font-size-sm);
+		font-weight: var(--font-weight-bold);
+		border: none;
 	}
 </style>

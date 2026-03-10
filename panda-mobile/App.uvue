@@ -37,6 +37,8 @@
 </script>
 
 <style>
+	@import "./theme/tokens.scss";
+
 	/*每个页面公共css */
 	.uni-row {
 		flex-direction: row;
@@ -44,5 +46,10 @@
 
 	.uni-column {
 		flex-direction: column;
+	}
+
+	page {
+		background-color: var(--semantic-bg-app);
+		color: var(--semantic-text-primary);
 	}
 </style>

@@ -1,0 +1,126 @@
+const MOCK_DELAY_SHORT = 400
+const MOCK_DELAY_MEDIUM = 650
+
+let profileCursor = 0
+let messageIdSeed = 100
+
+const profilePool = [
+  {
+    name: "林静宜",
+    meta: "26岁 · 165cm · 上海",
+    bio: "热爱生活中的小确幸，喜欢在午后书店发呆，寻找灵魂的共鸣。",
+    reason: "你们都偏爱安静但有温度的关系，聊天节奏匹配度很高。"
+  },
+  {
+    name: "苏晚晴",
+    meta: "24岁 · 168cm · 杭州",
+    bio: "喜欢徒步和摄影，周末常常去城市边缘看日落。",
+    reason: "兴趣标签重合度较高，推荐先从旅行话题开始。"
+  },
+  {
+    name: "周知夏",
+    meta: "27岁 · 162cm · 深圳",
+    bio: "独立设计师，热爱咖啡和展览，也喜欢认真听人说话。",
+    reason: "双方在价值观维度接近，适合稳定深入交流。"
+  }
+]
+
+const starterMessages = [
+  {
+    id: 1,
+    sender: "Sarah",
+    text: "嗨，很高兴认识你。",
+    direction: "incoming"
+  },
+  {
+    id: 2,
+    sender: "我",
+    text: "我也是，今天过得怎么样？",
+    direction: "outgoing"
+  }
+]
+
+const mockWait = (duration: number): Promise<void> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve()
+    }, duration)
+  })
+}
+
+const nextProfile = () => {
+  const profile = profilePool[profileCursor % profilePool.length]
+  profileCursor += 1
+  return profile
+}
+
+export const login = (phone: string, code: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    mockWait(MOCK_DELAY_SHORT).then(() => {
+      if (phone.length != 11) {
+        reject("请输入 11 位手机号")
+        return
+      }
+      if (code.length < 4) {
+        reject("验证码至少 4 位")
+        return
+      }
+      resolve({
+        userId: "mock-user-001",
+        nickname: "熊猫同学",
+        token: "mock-token"
+      })
+    })
+  })
+}
+
+export const fetchAffinityWall = (mode: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    mockWait(MOCK_DELAY_MEDIUM).then(() => {
+      if (mode == "error") {
+        reject("网络连接失败，请稍后再试")
+        return
+      }
+      if (mode == "empty") {
+        resolve({
+          state: "empty"
+        })
+        return
+      }
+      resolve({
+        state: "content",
+        profile: nextProfile()
+      })
+    })
+  })
+}
+
+export const fetchChatMessages = (): Promise<any> => {
+  return new Promise((resolve) => {
+    mockWait(MOCK_DELAY_SHORT).then(() => {
+      resolve({
+        state: "content",
+        list: starterMessages
+      })
+    })
+  })
+}
+
+export const sendChatMessage = (text: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    mockWait(MOCK_DELAY_SHORT).then(() => {
+      if (text.trim().length == 0) {
+        reject("消息不能为空")
+        return
+      }
+      messageIdSeed += 1
+      resolve({
+        id: messageIdSeed,
+        sender: "我",
+        text,
+        direction: "outgoing"
+      })
+    })
+  })
+}
+

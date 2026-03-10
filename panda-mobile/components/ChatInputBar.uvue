@@ -1,0 +1,82 @@
+<template>
+  <view class="chat-input-bar">
+    <input
+      class="chat-input-bar__input"
+      :value="value"
+      :placeholder="placeholder"
+      @input="onInput"
+      @confirm="onSend"
+    />
+    <button class="chat-input-bar__send" :disabled="sending" @tap="onSend">
+      {{ sending ? "发送中" : "发送" }}
+    </button>
+  </view>
+</template>
+
+<script setup lang="uts">
+const props = defineProps({
+  value: {
+    type: String,
+    default: ""
+  },
+  placeholder: {
+    type: String,
+    default: "输入消息..."
+  },
+  sending: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(["update:value", "send"])
+
+const onInput = (event) => {
+  emit("update:value", event.detail.value)
+}
+
+const onSend = () => {
+  emit("send")
+}
+</script>
+
+<style>
+.chat-input-bar {
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chat-input-bar__input {
+  flex: 1;
+  height: var(--component-input-height);
+  padding-left: var(--component-input-padding-x);
+  padding-right: var(--component-input-padding-x);
+  border-radius: var(--component-input-radius);
+  background-color: var(--component-input-bg);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--component-input-border);
+  color: var(--semantic-text-primary);
+  font-size: var(--font-size-base);
+}
+
+.chat-input-bar__send {
+  min-width: var(--space-24);
+  height: var(--component-button-primary-height);
+  border-radius: var(--component-button-primary-radius);
+  background-color: var(--component-button-primary-bg);
+  color: var(--component-button-primary-text);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.chat-input-bar__send:disabled {
+  opacity: 0.5;
+}
+</style>
+

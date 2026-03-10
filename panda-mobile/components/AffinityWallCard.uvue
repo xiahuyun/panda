@@ -1,0 +1,136 @@
+<template>
+  <view class="wall-card">
+    <text class="wall-card__title">缘分墙</text>
+
+    <view v-if="state == 'loading'" class="wall-card__state">
+      <text class="wall-card__state-text">正在寻找合适的人...</text>
+    </view>
+
+    <view v-else-if="state == 'empty'" class="wall-card__state">
+      <text class="wall-card__state-text">暂时没有新的推荐，稍后再来看看。</text>
+      <PrimaryButton text="重新获取" @click="onReload" />
+    </view>
+
+    <view v-else-if="state == 'error'" class="wall-card__state">
+      <text class="wall-card__state-text">加载失败：{{ errorText }}</text>
+      <PrimaryButton text="重试" @click="onReload" />
+    </view>
+
+    <view v-else class="wall-card__content">
+      <ProfileCard :avatarUrl="avatarUrl" :name="name" :meta="meta" :bio="bio" />
+      <view class="wall-card__reason">
+        <text class="wall-card__reason-title">推荐理由</text>
+        <text class="wall-card__reason-text">{{ reason }}</text>
+      </view>
+      <button class="wall-card__refresh" @tap="onRefresh">换一个</button>
+    </view>
+  </view>
+</template>
+
+<script setup lang="uts">
+import PrimaryButton from "./PrimaryButton.uvue"
+import ProfileCard from "./ProfileCard.uvue"
+
+const props = defineProps({
+  state: {
+    type: String,
+    default: "loading"
+  },
+  avatarUrl: {
+    type: String,
+    default: "/static/logo.png"
+  },
+  name: {
+    type: String,
+    default: ""
+  },
+  meta: {
+    type: String,
+    default: ""
+  },
+  bio: {
+    type: String,
+    default: ""
+  },
+  reason: {
+    type: String,
+    default: ""
+  },
+  errorText: {
+    type: String,
+    default: ""
+  }
+})
+
+const emit = defineEmits(["reload", "refresh"])
+
+const onReload = () => {
+  emit("reload")
+}
+
+const onRefresh = () => {
+  emit("refresh")
+}
+</script>
+
+<style>
+.wall-card {
+  width: 100%;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--semantic-bg-surface);
+}
+
+.wall-card__title {
+  margin-bottom: var(--space-3);
+  color: var(--semantic-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.wall-card__state {
+  gap: var(--space-3);
+}
+
+.wall-card__state-text {
+  color: var(--semantic-text-secondary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+}
+
+.wall-card__content {
+  gap: var(--space-4);
+}
+
+.wall-card__reason {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--semantic-bg-surface-muted);
+}
+
+.wall-card__reason-title {
+  color: var(--semantic-text-brand);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.wall-card__reason-text {
+  margin-top: var(--space-2);
+  color: var(--semantic-text-secondary);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-relaxed);
+}
+
+.wall-card__refresh {
+  height: var(--space-14);
+  border-radius: var(--radius-full);
+  background-color: var(--semantic-bg-surface-muted);
+  color: var(--semantic-text-secondary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+</style>
+

@@ -1,0 +1,70 @@
+<template>
+  <view class="profile-card">
+    <image class="profile-card__avatar" :src="avatarUrl" mode="aspectFill" />
+    <text class="profile-card__name">{{ name }}</text>
+    <text class="profile-card__meta">{{ meta }}</text>
+    <text class="profile-card__bio">{{ bio }}</text>
+  </view>
+</template>
+
+<script setup lang="uts">
+const props = defineProps({
+  avatarUrl: {
+    type: String,
+    default: "/static/logo.png"
+  },
+  name: {
+    type: String,
+    default: "小熊用户"
+  },
+  meta: {
+    type: String,
+    default: "26岁 · 上海"
+  },
+  bio: {
+    type: String,
+    default: "热爱生活中的小确幸，期待与你相遇。"
+  }
+})
+</script>
+
+<style>
+.profile-card {
+  width: 100%;
+  padding: var(--space-6);
+  border-radius: var(--component-card-profile-radius);
+  background-color: var(--component-card-profile-bg);
+  align-items: center;
+}
+
+.profile-card__avatar {
+  width: var(--space-24);
+  height: var(--space-24);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-4);
+}
+
+.profile-card__name {
+  color: var(--semantic-text-primary);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+.profile-card__meta {
+  margin-top: var(--space-1);
+  color: var(--semantic-text-secondary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+}
+
+.profile-card__bio {
+  margin-top: var(--space-4);
+  color: var(--semantic-text-secondary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-relaxed);
+  text-align: center;
+}
+</style>
+

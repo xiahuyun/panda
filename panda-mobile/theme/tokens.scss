@@ -1,0 +1,90 @@
+:root,
+page {
+  --font-family-base: "Plus Jakarta Sans", "Noto Sans SC", sans-serif;
+
+  --color-brand-primary: #ff8a8a;
+  --color-bg-canvas: #fdf5ed;
+  --color-bg-canvas-alt: #f8f5f5;
+  --color-bg-dark: #230f0f;
+  --color-text-primary: #181010;
+  --color-text-primary-alt: #332222;
+  --color-text-secondary: #8d5e5e;
+  --color-text-inverse: #ffffff;
+  --color-surface-base: #ffffff;
+  --color-surface-warm: #f5f0f0;
+  --color-surface-muted: #e5e1da;
+  --color-chat-incoming: #e3f2fd;
+  --color-chat-outgoing-soft: #ffe4e4;
+  --color-accent-success-soft: #e8f5e9;
+  --color-overlay-black50: rgba(0, 0, 0, 0.5);
+
+  --semantic-bg-app: var(--color-bg-canvas);
+  --semantic-bg-surface: var(--color-surface-base);
+  --semantic-bg-surface-muted: var(--color-surface-warm);
+  --semantic-bg-overlay: var(--color-overlay-black50);
+
+  --semantic-text-primary: var(--color-text-primary);
+  --semantic-text-secondary: var(--color-text-secondary);
+  --semantic-text-inverse: var(--color-text-inverse);
+  --semantic-text-brand: var(--color-brand-primary);
+
+  --semantic-border-soft: var(--color-surface-muted);
+  --semantic-border-brand-soft: rgba(255, 138, 138, 0.2);
+
+  --font-size-xs2: 10px;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-icon-xl: 32px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  --radius-md: 16px;
+  --radius-lg: 32px;
+  --radius-xl: 48px;
+  --radius-full: 9999px;
+
+  --component-button-primary-height: var(--space-14);
+  --component-button-primary-radius: var(--radius-full);
+  --component-button-primary-bg: var(--color-brand-primary);
+  --component-button-primary-text: var(--color-text-inverse);
+
+  --component-input-height: var(--space-14);
+  --component-input-radius: var(--radius-full);
+  --component-input-padding-x: var(--space-4);
+  --component-input-bg: var(--semantic-bg-surface);
+  --component-input-border: var(--semantic-border-soft);
+
+  --component-card-profile-radius: var(--radius-lg);
+  --component-card-profile-bg: var(--semantic-bg-surface);
+
+  --component-chat-bubble-radius: var(--radius-md);
+  --component-chat-bubble-incoming-bg: var(--color-chat-incoming);
+  --component-chat-bubble-outgoing-bg: var(--color-brand-primary);
+  --component-chat-bubble-outgoing-text: var(--color-text-inverse);
+}
+

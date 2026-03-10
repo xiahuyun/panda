@@ -1,0 +1,49 @@
+<template>
+  <button class="primary-button" :disabled="disabled" @tap="handleTap">
+    <text class="primary-button__text">{{ text }}</text>
+  </button>
+</template>
+
+<script setup lang="uts">
+const props = defineProps({
+  text: {
+    type: String,
+    default: "按钮"
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(["click"])
+
+const handleTap = () => {
+  if (!props.disabled) {
+    emit("click")
+  }
+}
+</script>
+
+<style>
+.primary-button {
+  height: var(--component-button-primary-height);
+  border-radius: var(--component-button-primary-radius);
+  background-color: var(--component-button-primary-bg);
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.primary-button:disabled {
+  opacity: 0.5;
+}
+
+.primary-button__text {
+  color: var(--component-button-primary-text);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+</style>
+
