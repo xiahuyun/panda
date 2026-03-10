@@ -1,35 +1,30 @@
-# Panda Mobile 导航与信息架构
+# Panda Mobile 导航与信息架构 (V0.2)
 
-## 1. 页面清单（首发）
+## 1. 页面清单（MVP）
 
-1. `LoginPage` 登录页
-2. `AffinityWallPage` 缘分墙
-3. `ChatPage` 聊天页
-4. `SettingsPage` 设置页（含账号删除、隐私政策入口）
+1. `LoginPage`：小熊交友 - 吃苹果熊猫 Logo 登录页
+2. `AffinityWallActivePage`：缘分墙 - 活跃状态 (普通用户版)
 
 ## 2. 路由关系
 
-1. 启动后：
-   - 未登录 -> `LoginPage`
-   - 已登录 -> `AffinityWallPage`
-2. `AffinityWallPage` -> `ChatPage`
-3. `ChatPage` 返回 -> `AffinityWallPage`
-4. 任意主页面 -> `SettingsPage`
+1. 启动 -> `LoginPage`
+2. `LoginPage` 登录成功 -> `AffinityWallActivePage`
+3. `LoginPage` 登录失败 -> 停留 `LoginPage`（验证码错误弹窗）
 
 ## 3. 导航规则
 
-1. 登录成功后清理登录页回退栈（避免返回到登录页）。
-2. 聊天页允许返回缘分墙，不直接退出 App。
-3. 结束连接后回到缘分墙并刷新推荐。
+1. 登录成功后清理登录页回退栈，避免返回未登录页。
+2. MVP 不接入聊天页与设置页导航。
+3. MVP 不持久化登录状态，每次启动默认进入登录页。
 
-## 4. 信息架构
+## 4. 信息架构（MVP）
 
-1. 账户域：登录状态、用户资料、账号删除
-2. 匹配域：推荐卡片、推荐理由、刷新推荐
-3. 聊天域：会话、消息列表、发送消息、举报拉黑
+1. 账户域：手机号、验证码、登录结果
+2. 缘分墙域：活跃态卡片展示
 
-## 5. 全局守卫（后续实现）
+## 5. 后续扩展位（未启用）
 
-1. 未登录访问受保护页面时，重定向登录页。
-2. token 过期时清理本地会话并跳转登录页。
+1. 聊天域
+2. 举报/拉黑域
+3. 账号管理域
 

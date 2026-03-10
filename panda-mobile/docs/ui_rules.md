@@ -24,7 +24,7 @@
 1. 所有颜色、字号、间距、圆角必须来自 `panda.tokens.json`。
 2. 禁止在业务 UI 中硬编码值（如 `#FF8A8A`、`padding: 13`、`font-size: 15px`）。
 3. 所有组件优先使用 semantic token，不直接引用 primitive token（除 token 定义层）。
-4. 新页面必须覆盖以下状态: `loading`、`empty`、`error`、`content`。
+4. 页面状态按业务需要定义，不强制所有页面都覆盖 `loading`、`empty`、`error`、`content` 四态。
 5. 交互控件最小可点区域 >= 44x44（iOS 规范）。
 6. 文字对比度需满足可读性要求（正文优先使用 `semantic.text.primary/secondary`）。
 
@@ -73,8 +73,8 @@
 3. `ProfileCard`
    - 使用 `component.card.profile.*` token。
 4. `ChatBubble`
-   - 使用 `component.chatBubble.*` token。
-   - 左右气泡视觉差异仅限背景、角切和对齐，不改字体体系。
+   - 非 MVP 组件，当前主分支不实现。
+   - 后续启用时再按 `component.chatBubble.*` token 落地。
 
 ---
 
@@ -116,8 +116,8 @@
 ```md
 请严格遵守 `docs/ui_rules.md` 与 `tokens/panda.tokens.json` 生成 UI：
 1) 只使用 token，不写硬编码视觉值；
-2) 复用现有组件模式（按钮/输入框/卡片/聊天气泡）；
-3) 输出必须包含 loading/empty/error/content 状态；
+2) 复用现有组件模式（按钮/输入框/卡片；聊天相关组件暂不纳入 MVP）；
+3) 输出页面状态按业务需要定义，不强制四态全覆盖；
 4) 保持“小熊交友”温暖、圆润、轻社交风格；
 5) 若需要新增样式，请先新增 token 再使用。
 ```
@@ -128,7 +128,6 @@
 
 1. 是否存在硬编码颜色、字号、间距、圆角？
 2. 是否所有主操作都使用 primary action token？
-3. 是否覆盖 4 种状态（loading/empty/error/content）？
+3. 页面状态是否与当前业务流程一致？
 4. 是否保持视觉风格一致（暖色、圆润、清晰层级）？
 5. 是否满足可访问性与点击区域规范？
-

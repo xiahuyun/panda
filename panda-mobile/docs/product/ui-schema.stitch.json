@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.1.0",
+  "generated_at": "2026-03-10T23:20:00+08:00",
+  "source": {
+    "provider": "stitch",
+    "project_id": "14672720946715964150",
+    "project_url": "https://stitch.withgoogle.com/projects/14672720946715964150",
+    "mode": "mvp_scoped",
+    "notes": "Schema narrowed to MVP: login -> affinity wall active only."
+  },
+  "mvp_scope": {
+    "include_page_keys": ["login", "affinity_wall_active"],
+    "exclude_page_keys": ["affinity_wall_waiting", "chat", "end_connection_modal", "affinity_hint_modal", "icebreaker_wide"],
+    "exclude_reason": "Out of MVP; avoid non-essential implementation."
+  },
+  "token_reference": {
+    "file": "tokens/panda.tokens.json"
+  },
+  "routes": [
+    {
+      "route": "/pages/auth/login",
+      "page_key": "login"
+    },
+    {
+      "route": "/pages/affinity/active",
+      "page_key": "affinity_wall_active"
+    }
+  ],
+  "page_schemas": {
+    "login": {
+      "source_screen_title": "小熊交友 - 吃苹果熊猫 Logo 登录页 (更新版)",
+      "layout": "single_column",
+      "sections": [
+        {
+          "id": "brand",
+          "nodes": [
+            { "type": "image", "key": "logo" },
+            { "type": "text", "key": "app_name" },
+            { "type": "text", "key": "welcome_copy" }
+          ]
+        },
+        {
+          "id": "auth_form",
+          "nodes": [
+            { "type": "input", "key": "phone", "input_type": "number" },
+            { "type": "input", "key": "verification_code", "input_type": "number" },
+            { "type": "button", "key": "submit_login_register", "variant": "primary" }
+          ]
+        },
+        {
+          "id": "legal",
+          "nodes": [
+            { "type": "text_link_group", "key": "terms_privacy_links", "mock_links": true }
+          ]
+        }
+      ],
+      "states": ["content", "loading", "error_modal", "success"],
+      "mock_rules": {
+        "phone_length": 11,
+        "code_length": 6,
+        "pass_code": "123456",
+        "error_text": "验证码错误",
+        "error_modal_auto_close_ms": 3000
+      },
+      "events": [
+        { "on": "submit_login_register", "action": "mock_validate_verification_code" },
+        { "on": "validate_success", "action": "navigate:/pages/affinity/active" },
+        { "on": "validate_fail", "action": "show_modal:verification_code_error_auto_close" }
+      ]
+    },
+    "affinity_wall_active": {
+      "source_screen_title": "缘分墙 - 活跃状态 (普通用户版)",
+      "layout": "single_column",
+      "sections": [
+        {
+          "id": "header",
+          "nodes": [
+            { "type": "text", "key": "title" },
+            { "type": "icon_button", "key": "membership_entry", "optional": true }
+          ]
+        },
+        {
+          "id": "profile_card",
+          "nodes": [
+            { "type": "avatar", "key": "profile_avatar" },
+            { "type": "text", "key": "profile_name" },
+            { "type": "text", "key": "profile_meta" },
+            { "type": "text", "key": "profile_bio" },
+            { "type": "info_card", "key": "recommend_reason" },
+            { "type": "badge", "key": "online_status" }
+          ]
+        }
+      ],
+      "states": ["loading", "active", "error"],
+      "data_model": {
+        "profile": {
+          "id": "string",
+          "name": "string",
+          "avatarUrl": "string",
+          "meta": "string",
+          "bio": "string",
+          "reason": "string",
+          "isOnline": "boolean"
+        }
+      }
+    }
+  },
+  "flow_schema": {
+    "start_route": "/pages/auth/login",
+    "steps": [
+      { "step": 1, "screen": "login", "label": "Open app and show login page" },
+      { "step": 2, "screen": "login", "label": "Enter phone + 6-digit code and tap submit" },
+      { "step": 3, "screen": "login", "label": "Mock validate; fail shows error modal and auto close in 3s" },
+      { "step": 4, "screen": "affinity_wall_active", "label": "On success navigate to affinity wall active state" }
+    ]
+  }
+}
