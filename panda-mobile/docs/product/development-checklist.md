@@ -71,3 +71,20 @@
 6. 协议/隐私 toast 文案正确，1500ms 各自独立节流生效。
 7. 视觉实现全部通过 token 约束与 UI 检查。
 8. Vue/uvue 文件通过 `code:script-setup-scan`（`App.uvue` 例外）。
+
+## 7. D4 A 稳定性收口（不扩范围）
+
+1. 仅做稳定性和体验修正，不新增页面/业务能力。
+2. HBuilderX 复测以下场景并记录结果：
+   - 手机号超长（>11）+ 验证码 6 位时，提交按钮禁用。
+   - 验证码超长（>6）时，提交按钮禁用。
+   - 错码弹窗 3 秒自动关闭，期间全屏禁交互。
+   - 正确码登录后稳定跳转 `pages/affinity/active`。
+3. 每次改动后执行：
+   - `npm run mock:sync`
+   - `npm run ui:check`
+4. 完成回归后更新：
+   - `docs/product/manual-test-checklist.md`
+   - `docs/product/process.md`
+   - `docs/product/architect.md`
+5. 满足以上条件后再进入打包与内测流程。
