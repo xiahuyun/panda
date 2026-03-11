@@ -12,6 +12,7 @@
 4. `docs/ui_rules.md`
 5. `docs/ui_lint_rules.md`
 6. `docs/product/development-constraints.md`
+7. `docs/product/release-prep-checklist.md`（进入 D4 P2 后必读）
 
 ## 2. D0 准备（0.5 天）
 
@@ -88,3 +89,10 @@
    - `docs/product/process.md`
    - `docs/product/architect.md`
 5. 满足以上条件后再进入打包与内测流程。
+
+## 8. D4 P2 封版与内测准备
+
+1. 按 `docs/product/release-prep-checklist.md` 执行封版前检查。
+2. 对齐 `main` 分支最新提交并确认 GitHub Actions 全绿。
+3. 在 HBuilderX 完成内测包打包与安装验证。
+4. 将封版 commit、内测包版本、日期、结论回填到 `release-prep-checklist.md`。

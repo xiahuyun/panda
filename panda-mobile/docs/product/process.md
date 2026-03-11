@@ -241,3 +241,17 @@
 1. 当前未发现新增阻塞项。
 下一步:
 1. 进入 D4 P2：版本封版记录与内测包准备。
+
+日期: 2026-03-11  
+里程碑: D4 P2 封版与内测准备清单落地  
+完成项:
+1. 新增 `docs/product/release-prep-checklist.md`，固化封版范围、门禁、HBuilderX 打包步骤与封版回填项。
+2. 更新 `development-checklist.md`，将 D4 P2 执行入口与回填要求文档化。
+3. 明确当前状态：已进入“可执行内测准备”阶段，待实际打包并回填封版记录。
+验证:
+1. 文档链路闭环：`process` / `architect` / `development-checklist` / `release-prep-checklist` 相互可追踪。
+2. `npm run ui:check` 通过。
+风险:
+1. 仍需在 HBuilderX 完成一次真实内测包打包，才能形成最终封版结论。
+下一步:
+1. 执行 HBuilderX 内测包打包并回填 `release-prep-checklist.md` 的“封版记录”字段。
