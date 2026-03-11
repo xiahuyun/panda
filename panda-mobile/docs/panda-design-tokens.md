@@ -4,6 +4,8 @@
 提取时间: 2026-03-10  
 提取范围: 10 个 screen 中 8 个可导出 HTML（2 个为图片资源，无结构化样式可提取）
 
+> 说明: 本文档用于设计评审与语义解释，`tokens/panda.tokens.json` 才是开发与 lint 的唯一真源。
+
 ## 提取方法
 
 1. 从 Stitch screen 的 `htmlCode.downloadUrl` 下载 HTML。
@@ -207,4 +209,3 @@ component.chat.bubble.outgoing.bg: "{semantic.chat.outgoing.bg}"
 1. `docs/panda-design-tokens.md`（当前文档，面向设计/评审）
 2. `tokens/panda.tokens.json`（机器可读，供 iOS/前端生成代码）
 3. iOS 侧映射（如 `Color+Tokens.swift`, `Typography.swift`, `Spacing.swift`）
-

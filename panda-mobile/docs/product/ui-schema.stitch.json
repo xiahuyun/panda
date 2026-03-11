@@ -1,12 +1,12 @@
 {
-  "schema_version": "1.1.0",
-  "generated_at": "2026-03-10T23:20:00+08:00",
+  "schema_version": "1.4.1",
+  "generated_at": "2026-03-11T17:20:00+08:00",
   "source": {
     "provider": "stitch",
     "project_id": "14672720946715964150",
     "project_url": "https://stitch.withgoogle.com/projects/14672720946715964150",
     "mode": "mvp_scoped",
-    "notes": "Schema narrowed to MVP: login -> affinity wall active only."
+    "notes": "Schema narrowed to MVP: login -> affinity wall active only. Updated with clarification decisions on 2026-03-11."
   },
   "mvp_scope": {
     "include_page_keys": ["login", "affinity_wall_active"],
@@ -50,23 +50,60 @@
         {
           "id": "legal",
           "nodes": [
-            { "type": "text_link_group", "key": "terms_privacy_links", "mock_links": true }
+            { "type": "text_link_group", "key": "terms_privacy_links", "mock_links": false, "interaction": "toast_placeholder" }
           ]
         }
       ],
-      "states": ["content", "loading", "error_modal", "success"],
+      "states": ["content", "invalid", "loading", "error_modal", "success"],
+      "loading_rules": {
+        "default_min_duration_ms": 600,
+        "tunable_by_experience": true
+      },
       "mock_rules": {
         "phone_length": 11,
+        "phone_digit_only": true,
+        "phone_segment_restriction": false,
         "code_length": 6,
         "pass_code": "123456",
         "error_text": "验证码错误",
         "error_modal_auto_close_ms": 3000
       },
+      "interaction_rules": {
+        "submit_enabled_when": "phone_length==11 && code_length==6",
+        "on_invalid_input": "disable_submit",
+        "error_modal_dismissible": false,
+        "error_modal_block_submit": true,
+        "error_modal_block_input_edit": true,
+        "error_modal_block_system_back": true,
+        "error_modal_block_all_clicks": true
+      },
+      "session_rules": {
+        "store_on_success": ["userId", "nickname"],
+        "storage": "memory_only",
+        "persist_across_launch": false,
+        "auth_token": "not_used_in_mvp",
+        "clear_when": "app_process_killed",
+        "keep_when": "app_background_foreground_switch"
+      },
       "events": [
         { "on": "submit_login_register", "action": "mock_validate_verification_code" },
         { "on": "validate_success", "action": "navigate:/pages/affinity/active" },
-        { "on": "validate_fail", "action": "show_modal:verification_code_error_auto_close" }
-      ]
+        { "on": "validate_fail", "action": "show_modal:verification_code_error_auto_close" },
+        { "on": "tap_terms", "action": "toast:用户协议建设中" },
+        { "on": "tap_privacy", "action": "toast:隐私政策建设中" }
+      ],
+      "feedback_rules": {
+        "toast_throttle_ms": 1500,
+        "allow_repeat_tap_within_throttle": false,
+        "toast_throttle_scope": "per_entry",
+        "toast_throttle_keys": ["terms", "privacy"]
+      },
+      "analytics_rules": {
+        "mode": "local_print_only",
+        "remote_upload": false,
+        "login_submit_blocked_trigger": "input_is_invalid",
+        "login_submit_blocked_deduplicate": false
+      }
     },
     "affinity_wall_active": {
       "source_screen_title": "缘分墙 - 活跃状态 (普通用户版)",
@@ -76,7 +113,7 @@
           "id": "header",
           "nodes": [
             { "type": "text", "key": "title" },
-            { "type": "icon_button", "key": "membership_entry", "optional": true }
+            { "type": "icon_button", "key": "membership_entry", "optional": false, "enabled": false }
           ]
         },
         {
@@ -91,8 +128,18 @@
           ]
         }
       ],
-      "states": ["loading", "active", "error"],
+      "states": ["loading", "active"],
+      "loading_rules": {
+        "default_min_duration_ms": 600,
+        "tunable_by_experience": true
+      },
       "data_model": {
+        "source": "local_mock_pool",
+        "source_file": "panda-mobile/mock/affinity-profiles.mock.json",
+        "min_pool_size": 3,
+        "selection_strategy": "random_one_per_login",
+        "avatar_render_mode": "placeholder_only",
+        "avatar_placeholder_path": "/static/logo.png",
         "profile": {
           "id": "string",
           "name": "string",
@@ -102,6 +149,10 @@
           "reason": "string",
           "isOnline": "boolean"
         }
+      },
+      "interaction_rules": {
+        "membership_entry_clickable": false,
+        "membership_entry_style": "disabled_gray"
       }
     }
   },
@@ -109,9 +160,9 @@
     "start_route": "/pages/auth/login",
     "steps": [
       { "step": 1, "screen": "login", "label": "Open app and show login page" },
-      { "step": 2, "screen": "login", "label": "Enter phone + 6-digit code and tap submit" },
-      { "step": 3, "screen": "login", "label": "Mock validate; fail shows error modal and auto close in 3s" },
-      { "step": 4, "screen": "affinity_wall_active", "label": "On success navigate to affinity wall active state" }
+      { "step": 2, "screen": "login", "label": "Enter phone + 6-digit code; invalid input disables submit" },
+      { "step": 3, "screen": "login", "label": "Mock validate; fail shows 3s non-dismissible modal with full-screen interaction lock" },
+      { "step": 4, "screen": "affinity_wall_active", "label": "On success navigate and render one profile randomly from local mock pool" }
     ]
   }
 }

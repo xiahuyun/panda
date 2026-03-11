@@ -1,5 +1,9 @@
 # Panda Mobile 埋点事件表 (MVP)
 
+实现说明（当前阶段）：
+1. 事件先本地打印（console/logger），不接入远端埋点平台。
+2. 事件结构按下表固定，后续可无缝切换到真实上报。
+
 ## 1. 事件命名约定
 
 格式：`module_action_result`
@@ -17,6 +21,7 @@
 | `app_launch` | App 启动 | `app_version` |
 | `login_page_view` | 登录页展示 | `page_key=login` |
 | `login_submit_click` | 点击登录/注册按钮 | `phone_length` |
+| `login_submit_blocked` | 只要当前输入非法（按钮禁用）即触发 | `phone_length`, `code_length` |
 | `login_verify_success` | mock 验证通过 | `phone_length`, `code_length` |
 | `login_verify_fail` | mock 验证失败 | `phone_length`, `code_length`, `error=验证码错误` |
 | `login_error_modal_show` | 错误弹窗展示 | `error=验证码错误` |
@@ -29,4 +34,5 @@
 1. 不上传完整手机号与验证码。
 2. `phone_length`、`code_length` 使用整数。
 3. 错误码/错误文案字段统一使用 `error`。
-
+4. `login_submit_blocked` 仅在输入非法时触发，不在点击禁用按钮时触发。
+5. `login_submit_blocked` 不做去重，输入非法即触发。

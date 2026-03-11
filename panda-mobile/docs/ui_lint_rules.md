@@ -4,7 +4,7 @@
 
 关联规范:
 - `docs/ui_rules.md`
-- `tokens/panda.tokens.json`
+- `tokens/panda.tokens.json`（唯一真源）
 
 目标: 在提交前自动发现并阻止“未使用 token 的视觉硬编码”。
 
@@ -144,4 +144,3 @@ rg -n --glob '*.{uvue,vue}' 'style\\s*=\\s*\"[^\"]*(#|rgba?\\(|[0-9]+px)' .
 3. 组件是否遵循 `docs/ui_rules.md`？
 4. 是否新增了未备案视觉档位？
 5. 异常豁免是否有原因和任务 ID？
-

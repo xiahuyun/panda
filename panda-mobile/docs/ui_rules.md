@@ -3,8 +3,8 @@
 适用范围: 本仓库所有新建或重构 UI（页面、组件、弹窗、空态、加载态）
 
 关联设计源:
-- Design tokens: `tokens/panda.tokens.json`
-- 设计说明: `docs/panda-design-tokens.md`
+- Design tokens（唯一真源）: `tokens/panda.tokens.json`
+- 设计说明（辅助文档，非约束源）: `docs/panda-design-tokens.md`
 
 ---
 
@@ -21,7 +21,7 @@
 
 ## 2. 非协商规则（Must）
 
-1. 所有颜色、字号、间距、圆角必须来自 `panda.tokens.json`。
+1. 所有颜色、字号、间距、圆角必须来自 `panda.tokens.json`（唯一真源）。
 2. 禁止在业务 UI 中硬编码值（如 `#FF8A8A`、`padding: 13`、`font-size: 15px`）。
 3. 所有组件优先使用 semantic token，不直接引用 primitive token（除 token 定义层）。
 4. 页面状态按业务需要定义，不强制所有页面都覆盖 `loading`、`empty`、`error`、`content` 四态。
