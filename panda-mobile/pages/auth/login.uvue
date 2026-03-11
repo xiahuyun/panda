@@ -50,19 +50,13 @@ import { logLocalEvent } from "../../services/analytics/local-event-logger.uts"
 
 const ERROR_MODAL_AUTO_CLOSE_MS = 3000
 const TOAST_THROTTLE_MS = 1500
-const MAX_PHONE_LENGTH = 11
-const MAX_CODE_LENGTH = 6
 const AFFINITY_ACTIVE_PAGE_URL = "/pages/affinity/active"
 
-const filterDigits = (raw: string, maxLength: number): string => {
+const filterDigits = (raw: string): string => {
   if (raw.length == 0) {
     return ""
   }
-  const onlyDigits = raw.replace(/[^0-9]/g, "")
-  if (onlyDigits.length <= maxLength) {
-    return onlyDigits
-  }
-  return onlyDigits.slice(0, maxLength)
+  return raw.replace(/[^0-9]/g, "")
 }
 
 const phone = ref("")
@@ -100,12 +94,12 @@ const emitBlockedWhenInvalid = () => {
 }
 
 const onPhoneInput = (value: string) => {
-  phone.value = filterDigits(value, MAX_PHONE_LENGTH)
+  phone.value = filterDigits(value)
   emitBlockedWhenInvalid()
 }
 
 const onCodeInput = (value: string) => {
-  code.value = filterDigits(value, MAX_CODE_LENGTH)
+  code.value = filterDigits(value)
   emitBlockedWhenInvalid()
 }
 

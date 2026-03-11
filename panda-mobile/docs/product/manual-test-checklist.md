@@ -6,8 +6,8 @@
 ## 1. 登录页
 
 1. 启动默认进入登录页（`pages/auth/login`）。【已自动确认】
-2. 手机号非 11 位数字时，提交按钮禁用。【已自动确认】
-3. 验证码非 6 位数字时，提交按钮禁用。【已自动确认】
+2. 手机号非 11 位数字时，提交按钮禁用。【已端上回归通过（HBuilderX，2026-03-11）】
+3. 验证码非 6 位数字时，提交按钮禁用。【已端上回归通过（HBuilderX，2026-03-11）】
 4. 输入非法时，控制台出现 `login_submit_blocked` 本地事件日志。【已自动确认】
 
 ## 2. 登录提交流程
@@ -51,7 +51,7 @@
 2. `npm run mock:sync`：通过（成功生成 `mock/affinity-profiles.mock.uts`）。
 3. 代码路径自检：通过（可自动确认项已标注）。
 4. 端上运行方式：已确认为 `HBuilderX`。
-5. 真机/模拟器手测：通过（HBuilderX，已完成第 2.5 条端上行为验证）。
+5. 真机/模拟器手测：通过（HBuilderX，已完成第 2.5 条与输入长度规则回归）。
 6. 历史阻塞细节（CLI 方案）:
    - `npm run dev:h5` 失败：缺少脚本 `dev:h5`。
    - `npx -y uni -v` 失败：当前 Node 版本下 `uni` CLI 运行时报 `TypeError: Cannot assign to read only property 'name'`。
