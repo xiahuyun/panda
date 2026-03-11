@@ -41,7 +41,7 @@
   </view>
 </template>
 
-<script lang="uts">
+<script setup lang="uts">
 import PrimaryButton from "../../components/PrimaryButton.uvue"
 import TextInput from "../../components/TextInput.uvue"
 import { isLoginFormValid, validateLoginMock } from "../../services/mock/login-service.uts"
@@ -65,152 +65,153 @@ const filterDigits = (raw: string, maxLength: number): string => {
   return onlyDigits.slice(0, maxLength)
 }
 
-export default {
-  components: {
-    PrimaryButton,
-    TextInput
-  },
-  data() {
-    return {
-      phone: "",
-      code: "",
-      isSubmitting: false,
-      isErrorModalVisible: false,
-      errorModalText: "验证码错误",
-      errorTimerId: 0,
-      lastTermsToastAt: 0,
-      lastPrivacyToastAt: 0
-    }
-  },
-  computed: {
-    isFormValid(): boolean {
-      return isLoginFormValid(this.phone, this.code)
-    },
-    isSubmitLocked(): boolean {
-      return this.isSubmitting || this.isErrorModalVisible
-    },
-    isSubmitDisabled(): boolean {
-      return this.isSubmitLocked || !this.isFormValid
-    },
-    submitText(): string {
-      return this.isSubmitting ? "登录中..." : "登录 / 注册"
-    }
-  },
-  onLoad() {
-    logLocalEvent("login_page_view", { page_key: "login" })
-  },
-  onUnload() {
-    if (this.errorTimerId != 0) {
-      clearTimeout(this.errorTimerId)
-      this.errorTimerId = 0
-    }
-  },
-  onBackPress() {
-    if (this.isErrorModalVisible) {
-      return true
-    }
-    return false
-  },
-  methods: {
-    emitBlockedWhenInvalid() {
-      if (!isLoginFormValid(this.phone, this.code)) {
-        logLocalEvent("login_submit_blocked", {
-          phone_length: this.phone.length,
-          code_length: this.code.length
-        })
-      }
-    },
-    onPhoneInput(value: string) {
-      this.phone = filterDigits(value, MAX_PHONE_LENGTH)
-      this.emitBlockedWhenInvalid()
-    },
-    onCodeInput(value: string) {
-      this.code = filterDigits(value, MAX_CODE_LENGTH)
-      this.emitBlockedWhenInvalid()
-    },
-    onSubmit() {
-      if (this.isSubmitDisabled) {
-        return
-      }
-      this.isSubmitting = true
-      logLocalEvent("login_submit_click", { phone_length: this.phone.length })
-      validateLoginMock(this.phone, this.code)
-        .then((user) => {
-          setSessionUser(user)
-          logLocalEvent("login_verify_success", {
-            phone_length: this.phone.length,
-            code_length: this.code.length
-          })
-          logLocalEvent("nav_to_affinity_active", { from: "login", to: "affinity_active" })
-          this.navigateToAffinityActive()
-        })
-        .catch((errorText) => {
-          logLocalEvent("login_verify_fail", {
-            phone_length: this.phone.length,
-            code_length: this.code.length,
-            error: errorText
-          })
-          this.showErrorModal(errorText)
-        })
-        .finally(() => {
-          this.isSubmitting = false
-        })
-    },
-    navigateToAffinityActive() {
-      uni.redirectTo({
+const phone = ref("")
+const code = ref("")
+const isSubmitting = ref(false)
+const isErrorModalVisible = ref(false)
+const errorModalText = ref("验证码错误")
+const errorTimerId = ref(0)
+const lastTermsToastAt = ref(0)
+const lastPrivacyToastAt = ref(0)
+
+const isFormValid = computed((): boolean => {
+  return isLoginFormValid(phone.value, code.value)
+})
+
+const isSubmitLocked = computed((): boolean => {
+  return isSubmitting.value || isErrorModalVisible.value
+})
+
+const isSubmitDisabled = computed((): boolean => {
+  return isSubmitLocked.value || !isFormValid.value
+})
+
+const submitText = computed((): string => {
+  return isSubmitting.value ? "登录中..." : "登录 / 注册"
+})
+
+const emitBlockedWhenInvalid = () => {
+  if (!isLoginFormValid(phone.value, code.value)) {
+    logLocalEvent("login_submit_blocked", {
+      phone_length: phone.value.length,
+      code_length: code.value.length
+    })
+  }
+}
+
+const onPhoneInput = (value: string) => {
+  phone.value = filterDigits(value, MAX_PHONE_LENGTH)
+  emitBlockedWhenInvalid()
+}
+
+const onCodeInput = (value: string) => {
+  code.value = filterDigits(value, MAX_CODE_LENGTH)
+  emitBlockedWhenInvalid()
+}
+
+const navigateToAffinityActive = () => {
+  uni.redirectTo({
+    url: AFFINITY_ACTIVE_PAGE_URL,
+    fail: (redirectError) => {
+      console.error("redirectTo affinity active failed", redirectError)
+      uni.navigateTo({
         url: AFFINITY_ACTIVE_PAGE_URL,
-        fail: (redirectError) => {
-          console.error("redirectTo affinity active failed", redirectError)
-          uni.navigateTo({
-            url: AFFINITY_ACTIVE_PAGE_URL,
-            fail: (navigateError) => {
-              console.error("navigateTo affinity active failed", navigateError)
-              uni.showToast({
-                title: "页面跳转失败，请重启后重试",
-                icon: "none"
-              })
-            }
+        fail: (navigateError) => {
+          console.error("navigateTo affinity active failed", navigateError)
+          uni.showToast({
+            title: "页面跳转失败，请重启后重试",
+            icon: "none"
           })
         }
       })
-    },
-    showErrorModal(message: string) {
-      this.errorModalText = message
-      this.isErrorModalVisible = true
-      logLocalEvent("login_error_modal_show", { error: message })
-      if (this.errorTimerId != 0) {
-        clearTimeout(this.errorTimerId)
-      }
-      this.errorTimerId = setTimeout(() => {
-        this.isErrorModalVisible = false
-        this.errorTimerId = 0
-        logLocalEvent("login_error_modal_auto_close", { duration_ms: ERROR_MODAL_AUTO_CLOSE_MS })
-      }, ERROR_MODAL_AUTO_CLOSE_MS)
-    },
-    onTapTerms() {
-      const now = Date.now()
-      if (now - this.lastTermsToastAt < TOAST_THROTTLE_MS) {
-        return
-      }
-      this.lastTermsToastAt = now
-      uni.showToast({
-        title: "用户协议建设中",
-        icon: "none"
-      })
-    },
-    onTapPrivacy() {
-      const now = Date.now()
-      if (now - this.lastPrivacyToastAt < TOAST_THROTTLE_MS) {
-        return
-      }
-      this.lastPrivacyToastAt = now
-      uni.showToast({
-        title: "隐私政策建设中",
-        icon: "none"
-      })
     }
-  }
+  })
 }
+
+const showErrorModal = (message: string) => {
+  errorModalText.value = message
+  isErrorModalVisible.value = true
+  logLocalEvent("login_error_modal_show", { error: message })
+  if (errorTimerId.value != 0) {
+    clearTimeout(errorTimerId.value)
+  }
+  errorTimerId.value = setTimeout(() => {
+    isErrorModalVisible.value = false
+    errorTimerId.value = 0
+    logLocalEvent("login_error_modal_auto_close", { duration_ms: ERROR_MODAL_AUTO_CLOSE_MS })
+  }, ERROR_MODAL_AUTO_CLOSE_MS)
+}
+
+const onSubmit = () => {
+  if (isSubmitDisabled.value) {
+    return
+  }
+  isSubmitting.value = true
+  logLocalEvent("login_submit_click", { phone_length: phone.value.length })
+  validateLoginMock(phone.value, code.value)
+    .then((user) => {
+      setSessionUser(user)
+      logLocalEvent("login_verify_success", {
+        phone_length: phone.value.length,
+        code_length: code.value.length
+      })
+      logLocalEvent("nav_to_affinity_active", { from: "login", to: "affinity_active" })
+      navigateToAffinityActive()
+    })
+    .catch((errorText: string) => {
+      logLocalEvent("login_verify_fail", {
+        phone_length: phone.value.length,
+        code_length: code.value.length,
+        error: errorText
+      })
+      showErrorModal(errorText)
+    })
+    .finally(() => {
+      isSubmitting.value = false
+    })
+}
+
+const onTapTerms = () => {
+  const now = Date.now()
+  if (now - lastTermsToastAt.value < TOAST_THROTTLE_MS) {
+    return
+  }
+  lastTermsToastAt.value = now
+  uni.showToast({
+    title: "用户协议建设中",
+    icon: "none"
+  })
+}
+
+const onTapPrivacy = () => {
+  const now = Date.now()
+  if (now - lastPrivacyToastAt.value < TOAST_THROTTLE_MS) {
+    return
+  }
+  lastPrivacyToastAt.value = now
+  uni.showToast({
+    title: "隐私政策建设中",
+    icon: "none"
+  })
+}
+
+onLoad(() => {
+  logLocalEvent("login_page_view", { page_key: "login" })
+})
+
+onUnload(() => {
+  if (errorTimerId.value != 0) {
+    clearTimeout(errorTimerId.value)
+    errorTimerId.value = 0
+  }
+})
+
+onBackPress((): boolean => {
+  if (isErrorModalVisible.value) {
+    return true
+  }
+  return false
+})
 </script>
 
 <style>

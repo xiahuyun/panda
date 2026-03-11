@@ -165,3 +165,19 @@
 1. 若运行环境仍被识别为单页面工程，降级后仍可能跳转失败，但会转为可观测错误与用户提示。
 下一步:
 1. 在 HBuilderX 按登录成功路径复测一次跳转，确认是否已恢复到 `pages/affinity/active`。
+
+日期: 2026-03-11  
+里程碑: D3 P8 页面/组件脚本范式统一为 script setup  
+完成项:
+1. `pages/auth/login.uvue` 从 `export default` 重构为 `<script setup lang=\"uts\">`，行为保持一致。
+2. `pages/affinity/active.uvue` 从 `export default` 重构为 `<script setup lang=\"uts\">`，行为保持一致。
+3. 新增 `scripts/script-setup-scan.sh`，扫描 `.vue/.uvue` 文件是否使用 `<script setup>`（`App.uvue` 例外）。
+4. `package.json` 更新 `ui:check`，将 `code:script-setup-scan` 纳入提交前门禁。
+5. 同步更新 `development-constraints.md`、`development-checklist.md`、`tech-stack.md`。
+验证:
+1. 执行 `npm run ui:check` 通过（token scan + script setup scan）。
+2. 执行 `npm run code:script-setup-scan` 通过。
+风险:
+1. `App.uvue` 受 uni-app x 框架能力限制，暂无法改为 `<script setup>`。
+下一步:
+1. 后续新增页面/组件按同一门禁执行，禁止回退到选项式写法。

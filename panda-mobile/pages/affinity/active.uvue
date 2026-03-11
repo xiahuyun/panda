@@ -31,49 +31,40 @@
   </view>
 </template>
 
-<script lang="uts">
+<script setup lang="uts">
 import ProfileCard from "../../components/ProfileCard.uvue"
 import { getSessionUser } from "../../services/session/session-store.uts"
 import { logLocalEvent } from "../../services/analytics/local-event-logger.uts"
 import { fetchRandomAffinityProfile } from "../../services/mock/affinity-wall-service.uts"
 
-export default {
-  components: {
-    ProfileCard
-  },
-  data() {
-    return {
-      nickname: "游客",
-      state: "loading",
-      profile: {
-        id: "",
-        name: "",
-        avatarUrl: "/static/logo.png",
-        meta: "",
-        bio: "",
-        reason: "",
-        isOnline: false
-      }
-    }
-  },
-  onLoad() {
-    const user = getSessionUser()
-    if (user != null && user.nickname != null) {
-      this.nickname = user.nickname
-    }
-    logLocalEvent("affinity_active_page_view", { page_key: "affinity_active" })
-    this.loadRandomProfile()
-  },
-  methods: {
-    loadRandomProfile() {
-      this.state = "loading"
-      fetchRandomAffinityProfile().then((data) => {
-        this.profile = data
-        this.state = "active"
-      })
-    }
-  }
+const nickname = ref("游客")
+const state = ref("loading")
+const profile = ref({
+  id: "",
+  name: "",
+  avatarUrl: "/static/logo.png",
+  meta: "",
+  bio: "",
+  reason: "",
+  isOnline: false
+})
+
+const loadRandomProfile = () => {
+  state.value = "loading"
+  fetchRandomAffinityProfile().then((data: any) => {
+    profile.value = data
+    state.value = "active"
+  })
 }
+
+onLoad(() => {
+  const user = getSessionUser()
+  if (user != null && user.nickname != null) {
+    nickname.value = user.nickname
+  }
+  logLocalEvent("affinity_active_page_view", { page_key: "affinity_active" })
+  loadRandomProfile()
+})
 </script>
 
 <style>

@@ -20,6 +20,7 @@
 3. 执行一次基线检查：`npm run ui:check`，记录当前结果。
 4. 明确 UI 仅使用 `tokens/panda.tokens.json`（唯一真源）。
 5. 明确里程碑文档同步责任：每个重要功能完成后更新 `docs/product/process.md` 与 `docs/product/architect.md`。
+6. 明确代码风格约束：页面/组件统一 `<script setup>`，`App.uvue` 为框架例外。
 
 ## 3. D1 P0 主流程（1 天）
 
@@ -69,3 +70,4 @@
 5. 缘分墙随机展示资料，会员入口灰态不可点。
 6. 协议/隐私 toast 文案正确，1500ms 各自独立节流生效。
 7. 视觉实现全部通过 token 约束与 UI 检查。
+8. Vue/uvue 文件通过 `code:script-setup-scan`（`App.uvue` 例外）。

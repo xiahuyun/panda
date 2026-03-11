@@ -32,3 +32,10 @@
 1. 代码改动应保持最小化，只改当前目标相关文件，避免无关重构。
 2. 开发步骤必须可测试、可回归，每一步都应能被验证（本地运行、UI 检查、关键路径手测）。
 3. 提交前至少执行 `npm run ui:check`。
+
+## 5. Vue/uvue 代码风格约束
+
+1. `pages/` 与 `components/` 下所有 `.vue/.uvue` 文件必须使用 `<script setup>` 写法。
+2. 禁止在页面和组件中新增 `export default {}` 选项式写法。
+3. 唯一例外: `App.uvue` 仍使用选项式写法（uni-app x 当前不支持 `App.uvue` 使用 `<script setup>`）。
+4. 提交前必须通过 `npm run ui:check` 中的 `code:script-setup-scan` 扫描门禁。

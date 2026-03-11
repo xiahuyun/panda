@@ -173,3 +173,18 @@
 2. 不改变页面模块边界，仅调整登录页导航实现细节。
 回滚方案:
 1. 若后续确认 `reLaunch` 在目标平台完全稳定，可回退为单 API 实现以简化代码。
+
+日期: 2026-03-11  
+变更点: 页面/组件脚本范式统一为 script setup + 自动门禁  
+原方案:
+1. `pages/auth/login.uvue`、`pages/affinity/active.uvue` 使用选项式 `export default`。
+2. 工程未对脚本范式做自动检查，后续可能混入多种写法。
+新方案:
+1. 业务页面统一改为 `<script setup lang=\"uts\">` 组合式写法。
+2. 新增 `scripts/script-setup-scan.sh`，并接入 `ui:check`，阻止非 `<script setup>` 页面/组件提交。
+3. `App.uvue` 保持选项式写法，作为框架能力限制的显式例外。
+影响评估:
+1. 页面/组件脚本范式统一，维护和 code review 成本下降。
+2. 通过自动扫描把规范从“约定”升级为“可执行门禁”。
+回滚方案:
+1. 若扫描门禁影响紧急修复节奏，可临时从 `ui:check` 移除，但需保留文档说明和补测计划。

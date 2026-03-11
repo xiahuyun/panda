@@ -16,6 +16,7 @@
 1. 应用框架: `uni-app x`
 2. UI 框架: `Vue 3`
 3. 语言形态: `UTS + .uvue`
+4. 页面/组件脚本范式: `<script setup>`（`App.uvue` 为框架限制例外）
 
 对应仓库证据:
 1. `panda-mobile/main.uts`
@@ -60,10 +61,12 @@
 ## 3. 当前工程化工具（已落地）
 
 1. npm script:
+   - `npm run code:script-setup-scan`
    - `npm run ui:token-scan`
    - `npm run ui:check`
 2. UI 门禁脚本:
    - `panda-mobile/scripts/ui-token-scan.sh`
+   - `panda-mobile/scripts/script-setup-scan.sh`
 
 ## 4. 待锁定项（进入正式开发前建议确认）
 
