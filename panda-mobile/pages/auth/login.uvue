@@ -52,6 +52,7 @@ const ERROR_MODAL_AUTO_CLOSE_MS = 3000
 const TOAST_THROTTLE_MS = 1500
 const MAX_PHONE_LENGTH = 11
 const MAX_CODE_LENGTH = 6
+const AFFINITY_ACTIVE_PAGE_URL = "/pages/affinity/active"
 
 const filterDigits = (raw: string, maxLength: number): string => {
   if (raw.length == 0) {
@@ -141,9 +142,7 @@ export default {
             code_length: this.code.length
           })
           logLocalEvent("nav_to_affinity_active", { from: "login", to: "affinity_active" })
-          uni.reLaunch({
-            url: "/pages/affinity/active"
-          })
+          this.navigateToAffinityActive()
         })
         .catch((errorText) => {
           logLocalEvent("login_verify_fail", {
@@ -156,6 +155,24 @@ export default {
         .finally(() => {
           this.isSubmitting = false
         })
+    },
+    navigateToAffinityActive() {
+      uni.redirectTo({
+        url: AFFINITY_ACTIVE_PAGE_URL,
+        fail: (redirectError) => {
+          console.error("redirectTo affinity active failed", redirectError)
+          uni.navigateTo({
+            url: AFFINITY_ACTIVE_PAGE_URL,
+            fail: (navigateError) => {
+              console.error("navigateTo affinity active failed", navigateError)
+              uni.showToast({
+                title: "页面跳转失败，请重启后重试",
+                icon: "none"
+              })
+            }
+          })
+        }
+      })
     },
     showErrorModal(message: string) {
       this.errorModalText = message
@@ -291,4 +308,3 @@ export default {
   text-align: center;
 }
 </style>
-

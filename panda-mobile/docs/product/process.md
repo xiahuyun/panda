@@ -106,3 +106,62 @@
 1. 若后续仅修改 `mock/affinity-profiles.mock.json` 但忘记执行 `npm run mock:sync`，运行时数据不会自动更新。
 下一步:
 1. 在开始 D4 前执行一次真机/模拟器手测，完成端上行为确认。
+
+日期: 2026-03-11  
+里程碑: D3 P4 端上手测执行与环境阻塞记录  
+完成项:
+1. 按手测清单尝试启动可验证环境，先后执行 `npm run dev:h5` 与 `npx -y uni -v`。
+2. 回填 `manual-test-checklist.md`，补充本轮执行结果与阻塞细节。
+3. 明确当前剩余待验证项仅为“错误弹窗期间返回键拦截与全屏禁交互”端上行为。
+验证:
+1. `npm run dev:h5` 执行失败（缺失脚本）。
+2. `npx -y uni -v` 执行失败（CLI 与当前 Node 版本不兼容）。
+风险:
+1. 在未完成真机/模拟器验证前，`onBackPress` 行为仍存在平台侧不确定性。
+2. 若不锁定 uni-app x 工具链版本，后续端上验证可能持续受环境差异影响。
+下一步:
+1. 由你确认并提供可用端上运行方式（HBuilderX 或指定 CLI 版本）。
+2. 环境就绪后优先完成第 2.5 条手测并回填“通过/不通过”。
+
+日期: 2026-03-11  
+里程碑: D3 P5 端上运行方式锁定为 HBuilderX  
+完成项:
+1. 端上验证工具链确定为 `HBuilderX`，不再使用当前 CLI 方案。
+2. 更新 `manual-test-checklist.md`，新增 HBuilderX 手测执行步骤。
+3. 将剩余验证项收敛为第 2.5 条（错误弹窗期间全屏禁交互 + 返回键拦截）。
+验证:
+1. 文档交叉核对通过（process / architect / checklist / tech-stack 一致）。
+2. `npm run ui:check` 无受影响项（通过）。
+风险:
+1. 端上手测仍需在 HBuilderX 实际执行后才能最终闭环。
+下一步:
+1. 通过 HBuilderX 执行第 2.5 条手测并回填结果。
+2. 若不通过，按现象补充缺陷条目并进入 D4 修正。
+
+日期: 2026-03-11  
+里程碑: D3 P6 HBuilderX 端上手测闭环  
+完成项:
+1. 按 `manual-test-checklist.md` 在 HBuilderX 完成第 2.5 条验证。
+2. 将登录流程第 2.5 条状态回填为“已端上验证通过”。
+3. 更新本轮执行结果，关闭“仅剩端上验证”待办状态。
+验证:
+1. 用户反馈：HBuilderX 手测执行步骤 2.5 通过。
+2. 文档状态已同步到 checklist / process / architect。
+风险:
+1. 当前 D1-D3 主流程无新增阻塞项。
+下一步:
+1. 进入 D4 迭代（如新增交互或异常分支）时复用同一手测基线。
+
+日期: 2026-03-11  
+里程碑: D3 P7 修复登录成功后跳转失败（reLaunch 异常）  
+完成项:
+1. `pages/auth/login.uvue` 登录成功跳转由 `uni.reLaunch` 调整为 `uni.redirectTo`。
+2. 新增降级路径：`redirectTo` 失败时自动尝试 `navigateTo`。
+3. 新增失败兜底提示，避免出现未捕获 Promise 报错并给出可感知反馈。
+验证:
+1. 代码路径验证通过：成功分支统一走 `navigateToAffinityActive()`。
+2. `npm run ui:check` 通过（UI token scan passed）。
+风险:
+1. 若运行环境仍被识别为单页面工程，降级后仍可能跳转失败，但会转为可观测错误与用户提示。
+下一步:
+1. 在 HBuilderX 按登录成功路径复测一次跳转，确认是否已恢复到 `pages/affinity/active`。

@@ -51,6 +51,12 @@
 3. `panda-mobile/docs/product/ui-schema.stitch.json`
 4. `panda-mobile/docs/product/analytics-events.md`
 
+### 2.5 端上运行与验证工具链
+
+1. MVP 端上运行方式: `HBuilderX`（已确认）。
+2. 当前不使用 CLI 方式进行端上验证（历史原因: `dev:h5` 脚本缺失，`uni` CLI 与当前 Node 版本兼容性失败）。
+3. 手测执行入口与步骤以 `docs/product/manual-test-checklist.md` 为准。
+
 ## 3. 当前工程化工具（已落地）
 
 1. npm script:
@@ -62,7 +68,8 @@
 ## 4. 待锁定项（进入正式开发前建议确认）
 
 1. 依赖版本锁定:
-   - uni-app x CLI/SDK 版本
+   - HBuilderX 版本
+   - uni-app x SDK 版本
    - Vue 运行时相关版本
 2. 代码质量工具实装:
    - stylelint 配置文件
