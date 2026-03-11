@@ -1,0 +1,14 @@
+let currentSessionUser: any | null = null
+
+export const setSessionUser = (user: any): void => {
+  currentSessionUser = user
+}
+
+export const getSessionUser = (): any | null => {
+  return currentSessionUser
+}
+
+export const clearSessionUser = (): void => {
+  currentSessionUser = null
+}
+

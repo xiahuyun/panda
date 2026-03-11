@@ -1,0 +1,10 @@
+const LOG_PREFIX = "[panda-event]"
+
+export const logLocalEvent = (name: string, payload: any | null = null): void => {
+  if (payload == null) {
+    console.log(`${LOG_PREFIX} ${name}`)
+    return
+  }
+  console.log(`${LOG_PREFIX} ${name}`, payload)
+}
+

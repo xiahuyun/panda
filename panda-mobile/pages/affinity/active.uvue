@@ -1,0 +1,176 @@
+<template>
+  <view class="page">
+    <view class="header">
+      <text class="header__title">缘分墙</text>
+      <button class="membership" disabled>
+        <text class="membership__text">会员</text>
+      </button>
+    </view>
+
+    <view v-if="state == 'loading'" class="loading-card">
+      <text class="loading-card__text">正在加载今日推荐...</text>
+    </view>
+
+    <view v-else class="content-card">
+      <ProfileCard
+        :avatarUrl="profile.avatarUrl"
+        :name="profile.name"
+        :meta="profile.meta"
+        :bio="profile.bio"
+      />
+      <view class="reason-card">
+        <text class="reason-card__title">推荐理由</text>
+        <text class="reason-card__text">{{ profile.reason }}</text>
+      </view>
+      <view class="online-row">
+        <view :class="profile.isOnline ? 'online-dot online-dot--on' : 'online-dot'" />
+        <text class="online-text">{{ profile.isOnline ? '在线' : '离线' }}</text>
+      </view>
+      <text class="session-text">当前用户：{{ nickname }}</text>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+import ProfileCard from "../../components/ProfileCard.uvue"
+import { getSessionUser } from "../../services/session/session-store.uts"
+import { logLocalEvent } from "../../services/analytics/local-event-logger.uts"
+import { fetchRandomAffinityProfile } from "../../services/mock/affinity-wall-service.uts"
+
+export default {
+  components: {
+    ProfileCard
+  },
+  data() {
+    return {
+      nickname: "游客",
+      state: "loading",
+      profile: {
+        id: "",
+        name: "",
+        avatarUrl: "/static/logo.png",
+        meta: "",
+        bio: "",
+        reason: "",
+        isOnline: false
+      }
+    }
+  },
+  onLoad() {
+    const user = getSessionUser()
+    if (user != null && user.nickname != null) {
+      this.nickname = user.nickname
+    }
+    logLocalEvent("affinity_active_page_view", { page_key: "affinity_active" })
+    this.loadRandomProfile()
+  },
+  methods: {
+    loadRandomProfile() {
+      this.state = "loading"
+      fetchRandomAffinityProfile().then((data) => {
+        this.profile = data
+        this.state = "active"
+      })
+    }
+  }
+}
+</script>
+
+<style>
+.page {
+  min-height: 100%;
+  padding: var(--space-4);
+  background-color: var(--semantic-bg-app);
+}
+
+.header {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.header__title {
+  color: var(--semantic-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.membership {
+  height: var(--space-8);
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+  border-radius: var(--radius-full);
+  border: none;
+  background-color: var(--semantic-bg-surface-muted);
+  opacity: 0.7;
+}
+
+.membership__text {
+  color: var(--semantic-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.loading-card {
+  padding: var(--space-6);
+  border-radius: var(--component-card-profile-radius);
+  background-color: var(--semantic-bg-surface);
+}
+
+.loading-card__text {
+  color: var(--semantic-text-secondary);
+  font-size: var(--font-size-base);
+  text-align: center;
+}
+
+.content-card {
+  gap: var(--space-4);
+}
+
+.reason-card {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--semantic-bg-surface);
+}
+
+.reason-card__title {
+  color: var(--semantic-text-brand);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.reason-card__text {
+  margin-top: var(--space-2);
+  color: var(--semantic-text-secondary);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-relaxed);
+}
+
+.online-row {
+  flex-direction: row;
+  align-items: center;
+}
+
+.online-dot {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-full);
+  background-color: var(--semantic-bg-surface-muted);
+}
+
+.online-dot--on {
+  background-color: var(--semantic-text-brand);
+}
+
+.online-text {
+  margin-left: var(--space-2);
+  color: var(--semantic-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.session-text {
+  color: var(--semantic-text-secondary);
+  font-size: var(--font-size-sm);
+}
+</style>

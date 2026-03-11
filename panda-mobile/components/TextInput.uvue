@@ -5,6 +5,7 @@
       class="text-input__control"
       :value="value"
       :type="type"
+      :disabled="disabled"
       :placeholder="placeholder"
       @input="onInput"
     />
@@ -24,6 +25,10 @@ const props = defineProps({
   type: {
     type: String,
     default: "text"
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   },
   placeholder: {
     type: String,
@@ -64,5 +69,9 @@ const onInput = (event) => {
   border-color: var(--component-input-border);
   color: var(--semantic-text-primary);
   font-size: var(--font-size-base);
+}
+
+.text-input__control:disabled {
+  opacity: 0.6;
 }
 </style>

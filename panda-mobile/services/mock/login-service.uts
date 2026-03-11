@@ -1,0 +1,42 @@
+const MOCK_LOGIN_DELAY_MS = 600
+const MOCK_PASS_CODE = "123456"
+const ERROR_INVALID_CODE = "验证码错误"
+
+const isDigits = (value: string): boolean => {
+  if (value.length == 0) {
+    return false
+  }
+  return /^[0-9]+$/.test(value)
+}
+
+export const isPhoneValid = (phone: string): boolean => {
+  return phone.length == 11 && isDigits(phone)
+}
+
+export const isCodeValid = (code: string): boolean => {
+  return code.length == 6 && isDigits(code)
+}
+
+export const isLoginFormValid = (phone: string, code: string): boolean => {
+  return isPhoneValid(phone) && isCodeValid(code)
+}
+
+export const validateLoginMock = (phone: string, code: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (!isLoginFormValid(phone, code)) {
+        reject(ERROR_INVALID_CODE)
+        return
+      }
+      if (code != MOCK_PASS_CODE) {
+        reject(ERROR_INVALID_CODE)
+        return
+      }
+      resolve({
+        userId: "mock_user_001",
+        nickname: "熊猫同学"
+      })
+    }, MOCK_LOGIN_DELAY_MS)
+  })
+}
+

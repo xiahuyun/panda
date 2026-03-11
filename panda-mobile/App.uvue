@@ -1,10 +1,17 @@
 <script lang="uts">
+	import { logLocalEvent } from "./services/analytics/local-event-logger.uts"
+
+	const APP_VERSION = "1.0.0"
+
 	// #ifdef APP-ANDROID || APP-HARMONY
 	let firstBackTime = 0
 	// #endif
 	export default {
 		onLaunch() {
 			console.log('App Launch')
+			logLocalEvent("app_launch", {
+				app_version: APP_VERSION
+			})
 		},
 		onShow() {
 			console.log('App Show')
