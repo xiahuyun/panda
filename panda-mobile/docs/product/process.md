@@ -195,3 +195,18 @@
 1. 需在 HBuilderX 再跑一次长度规则回归，确认端上输入显示与按钮禁用状态一致。
 下一步:
 1. 在 HBuilderX 验证“手机号 12 位/13 位 + 验证码 6 位”场景必须禁用提交并不可跳转。
+
+日期: 2026-03-11  
+里程碑: D3 P10 修复 CI 脚本门禁在无 rg 环境误报失败  
+完成项:
+1. 定位根因：`scripts/script-setup-scan.sh` 强依赖 `rg`，CI 无 `rg` 时把“命令不存在”误判为“文件不合规”。
+2. 新增扫描函数 `match_script_setup`：优先使用 `rg`，不可用时自动回退 `grep -E`。
+3. 保持现有规则不变：`App.uvue` 继续作为例外，其他 `.vue/.uvue` 必须使用 `<script setup>`。
+验证:
+1. `npm run code:script-setup-scan` 通过。
+2. 在无 `rg` 模拟环境（`PATH=/usr/bin:/bin`）执行脚本通过。
+3. `npm run ui:check` 通过（token scan + script setup scan）。
+风险:
+1. 若后续扫描规则升级为更复杂正则，需同时验证 `rg` 与 `grep` 兼容性。
+下一步:
+1. 观察下一次 GitHub Actions 执行结果，确认 CI 环境稳定通过。

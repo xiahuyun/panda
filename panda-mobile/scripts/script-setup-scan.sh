@@ -7,13 +7,23 @@ cd "$ROOT_DIR"
 echo "Running script setup scan..."
 
 failed=0
+script_pattern="<script[[:space:]]+setup([[:space:]]|>)"
+
+match_script_setup() {
+  local file="$1"
+  if command -v rg >/dev/null 2>&1; then
+    rg -q "$script_pattern" "$file"
+    return $?
+  fi
+  grep -Eq "$script_pattern" "$file"
+}
 
 while IFS= read -r file; do
   if [[ "$file" == "App.uvue" ]]; then
     continue
   fi
 
-  if ! rg -q "<script[[:space:]]+setup([[:space:]]|>)" "$file"; then
+  if ! match_script_setup "$file"; then
     echo "Script setup scan failed: $file does not use <script setup>."
     failed=1
   fi
