@@ -1,0 +1,32 @@
+// AUTO-GENERATED FILE. DO NOT EDIT DIRECTLY.
+// Source: mock/affinity-profiles.mock.json
+
+export const AFFINITY_PROFILES_MOCK = [
+  {
+    "id": "p_001",
+    "name": "林静宜",
+    "avatarUrl": "/static/logo.png",
+    "meta": "26岁 · 165cm · 上海",
+    "bio": "热爱生活中的小确幸，周末喜欢逛展和做甜点。",
+    "reason": "你们在兴趣和交流节奏上较匹配",
+    "isOnline": true
+  },
+  {
+    "id": "p_002",
+    "name": "周若彤",
+    "avatarUrl": "/static/logo.png",
+    "meta": "25岁 · 162cm · 杭州",
+    "bio": "喜欢徒步和咖啡馆打卡，期待认识真诚的朋友。",
+    "reason": "你们在生活方式偏好上相近",
+    "isOnline": false
+  },
+  {
+    "id": "p_003",
+    "name": "陈雨宁",
+    "avatarUrl": "/static/logo.png",
+    "meta": "27岁 · 168cm · 深圳",
+    "bio": "工作日专注，周末爱看电影和城市漫步。",
+    "reason": "你们在价值观与沟通风格上契合",
+    "isOnline": true
+  }
+]

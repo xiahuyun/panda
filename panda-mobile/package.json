@@ -2,6 +2,7 @@
   "name": "panda",
   "private": true,
   "scripts": {
+    "mock:sync": "node ./scripts/sync-affinity-profiles-mock.mjs",
     "ui:token-scan": "LC_ALL=C bash ./scripts/ui-token-scan.sh",
     "ui:check": "npm run ui:token-scan"
   }

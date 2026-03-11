@@ -14,7 +14,7 @@
 ## 当前架构（MVP）
 
 1. 页面层：`LoginPage`、`AffinityWallActivePage`
-2. 数据层：本地 mock（`panda-mobile/mock/affinity-profiles.mock.json`）
+2. 数据层：`mock/affinity-profiles.mock.json` 为真源，脚本生成 `mock/affinity-profiles.mock.uts` 供运行时读取
 3. 样式层：`tokens/panda.tokens.json` 为唯一真源
 4. 运行时：`uni-app x + Vue 3 + UTS/.uvue`
 
@@ -86,3 +86,34 @@
 回滚方案:
 1. 若需要临时关闭应用级埋点，可移除 `App.uvue` 中 `app_launch` 日志调用。
 2. 手测清单文档为非运行时依赖，移除不会影响代码执行。
+
+日期: 2026-03-11  
+变更点: 测试清单状态化并补充实现偏差追踪  
+原方案:
+1. `manual-test-checklist.md` 仅为条目列表，未标注“自动确认/待验证”状态。
+2. 资料源一致性偏差未在架构记录中显式追踪。
+新方案:
+1. 手测清单增加状态标注，区分可自动确认项与端上验证项。
+2. 将“缘分墙资料源未读取 mock 文件”的偏差登记为待修正事项。
+影响评估:
+1. 测试执行更可控，可快速识别剩余阻塞项。
+2. 架构与文档一致性问题可被持续跟踪，降低后续返工风险。
+回滚方案:
+1. 清单状态标注属于文档增量，不影响运行时，必要时可回退到纯列表版本。
+
+日期: 2026-03-11  
+变更点: 缘分墙资料源统一为 mock 文件真源 + 生成产物消费  
+原方案:
+1. `services/mock/affinity-wall-service.uts` 内部维护硬编码资料池。
+2. 与文档声明的 `mock/affinity-profiles.mock.json` 真源存在偏差。
+新方案:
+1. 新增同步脚本 `scripts/sync-affinity-profiles-mock.mjs`，将 JSON 真源转换为 `mock/affinity-profiles.mock.uts`。
+2. `affinity-wall-service.uts` 仅消费 `AFFINITY_PROFILES_MOCK`，不再内置数据。
+3. npm 脚本新增 `mock:sync`，作为资料源变更后的标准同步入口。
+影响评估:
+1. 产品文档、数据源、运行时代码三者一致，降低后续维护歧义。
+2. service 职责收敛为“随机选择 + loading 时长控制”，边界更清晰。
+3. 新增一步生成流程，开发时需保证 JSON 变更后执行同步命令。
+回滚方案:
+1. 若生成链路异常，可临时恢复 service 内置资料池保证功能可用。
+2. 同步脚本与生成文件均为增量文件，可独立回退。

@@ -75,3 +75,34 @@
 下一步:
 1. 执行手测清单并记录结果。
 2. 根据手测反馈做小范围修正后准备提交。
+
+日期: 2026-03-11  
+里程碑: D3 P2 手测清单自动确认填充  
+完成项:
+1. `manual-test-checklist.md` 已按“可自动确认 / 待端上验证 / 待修正”完成状态标注。
+2. 自动可确认项已逐条校对并标记。
+3. 识别并记录 1 个待修正项：缘分墙资料源当前为 service 内置池，尚未读取 `panda-mobile/mock/affinity-profiles.mock.json`。
+验证:
+1. 文档与当前代码实现对照完成。
+2. 关键状态（登录校验、错误弹窗、节流、埋点）已完成代码级确认。
+风险:
+1. “资料源文件化”未完成前，代码与产品文档存在轻微偏差。
+2. 端上行为验证仍未执行。
+下一步:
+1. 先修正缘分墙资料源读取逻辑，与文档完全对齐。
+2. 执行真机/模拟器手测并回填最终结果。
+
+日期: 2026-03-11  
+里程碑: D3 P3 修复缘分墙资料源与文档不一致  
+完成项:
+1. 新增 `scripts/sync-affinity-profiles-mock.mjs`，将 `mock/affinity-profiles.mock.json` 转换为运行时可直接引用的 `mock/affinity-profiles.mock.uts`。
+2. 新增 npm 脚本 `mock:sync`，用于手动触发同步生成。
+3. `services/mock/affinity-wall-service.uts` 改为读取 `AFFINITY_PROFILES_MOCK`，移除 service 内置资料池。
+4. 更新手测清单，关闭“资料源待修正”项。
+验证:
+1. 执行 `npm run mock:sync` 通过（成功生成 `mock/affinity-profiles.mock.uts`）。
+2. 执行 `npm run ui:check` 通过（UI token scan passed）。
+风险:
+1. 若后续仅修改 `mock/affinity-profiles.mock.json` 但忘记执行 `npm run mock:sync`，运行时数据不会自动更新。
+下一步:
+1. 在开始 D4 前执行一次真机/模拟器手测，完成端上行为确认。
