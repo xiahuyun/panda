@@ -1,6 +1,6 @@
 # Panda Mobile 开发过程记录
 
-更新时间: 2026-03-11
+更新时间: 2026-03-12
 
 ## 记录规则
 
@@ -255,3 +255,200 @@
 1. 仍需在 HBuilderX 完成一次真实内测包打包，才能形成最终封版结论。
 下一步:
 1. 执行 HBuilderX 内测包打包并回填 `release-prep-checklist.md` 的“封版记录”字段。
+
+日期: 2026-03-11  
+里程碑: D5 P0 基线升级（缘分墙动作闭环）  
+完成项:
+1. 将 `再等等/感兴趣` 从“非范围”升级为 D5 P0 范围，更新 `prd-lite.md`。
+2. 更新 `api-contract.md`，新增动作契约（same-day 单推荐、wait/interested mock 结果、消息栏占位页契约）。
+3. 更新 `ui-schema.stitch.json`，新增 `action_bar` 与 `message_placeholder` 页面 schema。
+4. 同步更新关联文档：`interaction-flow.md`、`navigation-ia.md`、`state-matrix.md`、`compliance-checklist.md`、`development-checklist.md`、`mvp-decisions.md`。
+验证:
+1. `ui-schema.stitch.json` 结构校验通过（JSON parse ok）。
+2. 文档基线一致性检查通过（无 D5 范围冲突项）。
+风险:
+1. `message_placeholder` 新路由尚未落地代码，当前仍是文档先行状态。
+下一步:
+1. 进入 D5 P1 代码实现：先落地缘分墙动作区与同日单推荐状态机，再补消息栏占位页路由。
+
+日期: 2026-03-11  
+里程碑: D5 P0.1 需求澄清 7 点落盘（代码前）  
+完成项:
+1. 匹配规则明确为固定规则：`profileId=="p_001"` 为 `matched=true`。
+2. 当天动作点击即锁定，`再等等` 与 `感兴趣` 不可改选。
+3. `matched=false` 统一 toast 文案：`今日匹配已用完，请明日再来`。
+4. 日期边界明确为设备本地自然日（00:00）。
+5. 消息占位页返回路径明确：按当前 `dateKey` 回到缘分墙应展示卡片（立即重算）。
+6. 动作埋点事件命名与字段规范更新至 `analytics-events.md`。
+7. `release-prep-checklist.md` 按 D5 范围更新。
+验证:
+1. 文档一致性对齐完成（PRD/API/UI Schema/导航/状态/埋点/封版清单）。
+2. `ui-schema.stitch.json` JSON 结构校验通过。
+风险:
+1. `profileId=="p_001"` 固定规则依赖 mock 池稳定命名，后续改池需同步规则。
+下一步:
+1. 按澄清后的唯一规则进入 D5 P1 代码实现。
+
+日期: 2026-03-11  
+里程碑: D5 P0.2 需求澄清 6 点补充落盘（代码前）  
+完成项:
+1. 明确“同一自然日重新登录仍是同一推荐对象”。
+2. 明确“App 进程被杀后动作锁定不保留”。
+3. 明确“动作锁定后再次点击静默忽略，不弹 toast”。
+4. 明确“`再等等` toast 在 MVP 固定为 `已为你安排明日推荐`”。
+5. 明确“设备本地时间 00:00 自动重置当日推荐与动作锁定”。
+6. 明确“`tech-stack.md` 待锁定项在 D5 功能完成后再统一锁定”。
+7. 同步更新文档：`prd-lite.md`、`api-contract.md`、`ui-schema.stitch.json`、`state-matrix.md`、`interaction-flow.md`、`navigation-ia.md`、`analytics-events.md`、`development-checklist.md`、`manual-test-checklist.md`、`compliance-checklist.md`、`tech-stack.md`。
+验证:
+1. 文档交叉检查通过（无口径冲突）。
+2. `ui-schema.stitch.json` 结构校验通过（JSON parse ok）。
+风险:
+1. “同日同对象”与“进程被杀后动作锁定不保留”依赖实现时将“推荐对象稳定策略”和“动作锁定存储策略”拆分处理。
+下一步:
+1. 按 D5 P0.2 规则进入 D5 P1 代码实现，不再新增解释分支。
+
+日期: 2026-03-12  
+里程碑: D5 P0.3 关键实现细节澄清落盘（代码前）  
+完成项:
+1. 明确同日稳定推荐键：`stable_pick_unseen(userId, dateKey, cycleHistory)`。
+2. 明确 `stable_pick_unseen` 的 `userId` 来源：内存会话 `sessionUser.userId`。
+3. 明确 00:00 行为：页面停留中到点立即重置并换卡，不等待下次交互或 `onShow`。
+4. 明确 `matched=true` 时会话标识生成规则：`conversationId = profileId + "_" + dateKey`。
+5. 同步更新文档：`api-contract.md`、`ui-schema.stitch.json`、`prd-lite.md`、`state-matrix.md`、`interaction-flow.md`、`analytics-events.md`、`manual-test-checklist.md`、`development-checklist.md`、`navigation-ia.md`、`compliance-checklist.md`、`release-prep-checklist.md`、`tech-stack.md`、`mvp-decisions.md`。
+验证:
+1. 关键规则关键词交叉扫描通过（userId/dateKey/00:00/conversationId）。
+2. `ui-schema.stitch.json` 结构校验通过（JSON parse ok）。
+风险:
+1. 00:00 到点即时换卡依赖端上定时与页面生命周期处理，需在 HBuilderX 真机重点回归。
+下一步:
+1. 按 D5 P0.3 口径进入 D5 P1 代码实现与手测回填。
+
+日期: 2026-03-12  
+里程碑: D5 P0.4 推荐去重规则澄清落盘（代码前）  
+完成项:
+1. 明确推荐规则不是“仅与前一天不同”，而是“同一用户历史已推荐对象后续不再推荐”。
+2. 明确 00:00 即时重置后的目标是“历史未推荐对象”。
+3. 动作输入示例 `userId` 统一为 `mock_user_${phone}`。
+4. 同步更新文档：`api-contract.md`、`prd-lite.md`、`ui-schema.stitch.json`、`state-matrix.md`、`interaction-flow.md`、`navigation-ia.md`、`development-checklist.md`、`manual-test-checklist.md`、`compliance-checklist.md`、`release-prep-checklist.md`、`tech-stack.md`、`analytics-events.md`、`mvp-decisions.md`。
+验证:
+1. 关键词交叉扫描通过（历史去重/未推荐对象/mock_user_${phone}）。
+2. `ui-schema.stitch.json` 结构校验通过（JSON parse ok）。
+风险:
+1. 00:00 到点即时重置与历史循环依赖端上定时与持久层协同，需在 HBuilderX 真机重点回归。
+下一步:
+1. 在 D5 P1 实现中补齐“用户推荐历史持久化 + 未推荐对象选择器”。
+
+日期: 2026-03-12  
+里程碑: D5 P0.5 推荐池耗尽与历史生命周期澄清落盘（代码前）  
+完成项:
+1. 明确未推荐池耗尽兜底：当日不重置历史，下一天 00:00 重置历史后重新循环推荐。
+2. 明确历史生命周期边界：仅在“卸载/清除应用数据”时清空。
+3. 同步更新文档：`api-contract.md`、`ui-schema.stitch.json`、`prd-lite.md`、`state-matrix.md`、`interaction-flow.md`、`navigation-ia.md`、`development-checklist.md`、`manual-test-checklist.md`、`compliance-checklist.md`、`release-prep-checklist.md`、`tech-stack.md`、`analytics-events.md`、`mvp-decisions.md`。
+验证:
+1. 关键词交叉扫描通过（pool exhausted/next-day reset/uninstall clear）。
+2. `ui-schema.stitch.json` 结构校验通过（JSON parse ok）。
+风险:
+1. 无新增产品口径风险。
+下一步:
+1. 按 D5 P0.5 基线进入代码实现与手测回填。
+
+日期: 2026-03-12  
+里程碑: D5 P0.6 双历史模型口径收敛（代码前）  
+完成项:
+1. 明确采用双历史模型：`cycleHistory`（用于推荐去重，耗尽后次日 00:00 重置）+ `lifetimeHistory`（仅卸载/清数据清空）。
+2. 将“历史重置/历史清空”冲突表述统一为双历史语义。
+3. 同步更新文档：`api-contract.md`、`ui-schema.stitch.json`、`prd-lite.md`、`state-matrix.md`、`interaction-flow.md`、`navigation-ia.md`、`development-checklist.md`、`manual-test-checklist.md`、`compliance-checklist.md`、`release-prep-checklist.md`、`tech-stack.md`、`analytics-events.md`。
+验证:
+1. 关键词交叉扫描通过（cycleHistory/lifetimeHistory/next-day reset/uninstall clear）。
+2. `ui-schema.stitch.json` 结构校验通过（JSON parse ok）。
+风险:
+1. 无新增产品口径风险。
+下一步:
+1. 以 D5 P0.6 文档基线进入代码实现。
+
+日期: 2026-03-12  
+里程碑: D5 P0.7 开发前补充澄清落盘（代码前）  
+完成项:
+1. 明确 `stable_pick_unseen` 仅要求行为正确，算法实现可自定。
+2. 明确 `cycleHistory` 与 `lifetimeHistory` 均按 `userId` 维度本地持久化。
+3. 明确消息占位页在 MVP 阶段不处理跨 00:00 特殊逻辑。
+4. 明确次日 00:00 进入新循环后，首个推荐对象优先不与上一自然日最后展示对象相同（无可选候选可降级重复）。
+5. 明确非 MVP 聊天组件保留文件，但不接入主流程。
+6. 明确 `login_submit_blocked` 触发规则为“合法 -> 非法”边沿触发，持续非法不重复触发。
+7. 同步更新文档：`prd-lite.md`、`api-contract.md`、`ui-schema.stitch.json`、`analytics-events.md`、`tech-stack.md`、`development-checklist.md`、`interaction-flow.md`、`navigation-ia.md`、`state-matrix.md`、`compliance-checklist.md`、`release-prep-checklist.md`、`manual-test-checklist.md`、`mvp-decisions.md`。
+验证:
+1. 关键词交叉扫描通过（edge trigger / next-cycle-first-not-equal-last / message-placeholder-no-cross-day-special / keep-chat-components-not-wired）。
+2. `ui-schema.stitch.json` 结构校验通过（JSON parse ok）。
+风险:
+1. 新循环首卡“优先不等于昨日末卡（无可选候选可降级重复）”依赖实现阶段保留并读取“上一日最后展示对象”标记，需在 D5 P1 重点回归。
+下一步:
+1. 按 D5 P0.7 文档基线进入代码实现。
+
+日期: 2026-03-12  
+里程碑: D5 P0.8 开发前补充澄清落盘（边界定义）  
+完成项:
+1. 明确 `login_submit_blocked` 首次进入页面初始非法态不触发。
+2. 明确“上一自然日最后展示对象”定义为系统最后一次成功分配推荐对象（不依赖页面停留位置）。
+3. 明确新循环首卡“优先不等于昨日末卡（无可选候选可降级重复）”，不阻断主流程。
+4. 明确消息占位页跨日不做特殊处理，但返回缘分墙时按当前 `dateKey` 立即重算卡片。
+5. 明确“非 MVP 聊天组件保留但不接入”的工程边界：主流程页面禁止 import，主流程路由禁止跳转到非 MVP 聊天路由。
+6. 明确 `loading=600ms` 为默认可调参数，不作为固定验收阈值。
+7. 同步更新文档：`prd-lite.md`、`api-contract.md`、`ui-schema.stitch.json`、`analytics-events.md`、`tech-stack.md`、`development-checklist.md`、`interaction-flow.md`、`navigation-ia.md`、`state-matrix.md`、`compliance-checklist.md`、`release-prep-checklist.md`、`manual-test-checklist.md`、`mvp-decisions.md`。
+8. 历史里程碑中涉及本次边界定义的表述已统一替换为 D5 P0.8 口径。
+9. 明确 MVP 阶段 `nav_back_to_affinity_active` 不新增 `date_key/profile_id`，且不要求“重算完成后再触发”。
+10. 明确消息占位页可将系统返回视为空态“下一步动作”，MVP 不强制新增显式按钮/链接。
+验证:
+1. 关键词交叉扫描通过（initial-invalid-no-trigger / previous-day-last-is-last-assigned / fallback-allow-repeat / recompute-on-back / no-chat-import-nav / loading-tunable / nav-back-no-recompute-fields-in-mvp / message-placeholder-system-back-as-next-action）。
+2. `ui-schema.stitch.json` 结构校验通过（JSON parse ok）。
+风险:
+1. MVP 阶段不新增“无候选降级重复”专门观测事件，后续按需要再补充。
+下一步:
+1. 以 D5 P0.8 文档基线继续开发前检查。
+
+日期: 2026-03-12  
+里程碑: D5 P1 代码实现落地（动作闭环 + 消息占位页）  
+完成项:
+1. `pages/affinity/active.uvue` 完成 D5 动作区接入：`再等等/感兴趣`、当天动作锁定、锁定后二次点击静默忽略。
+2. `services/mock/affinity-wall-service.uts` 完成推荐状态机落地：同日稳定 + 历史去重、未推荐池耗尽次日重置、新循环首卡优先不等于昨日末卡（无候选可降级重复）。
+3. 推荐历史与分配状态按 `userId` 本地持久化；动作锁定按内存存储（进程被杀后不保留）。
+4. 固定匹配规则落地：`profileId=="p_001"` 为匹配成功；`conversationId = profileId + "_" + dateKey`。
+5. 新增消息占位页 `pages/message/index.uvue`，文案固定为 `消息功能建设中`，并接入 `message_placeholder_page_view` 事件。
+6. 登录 mock 用户标识改为 `mock_user_${phone}`，保障同一用户跨会话同日推荐稳定。
+7. `login_submit_blocked` 已落地为“合法 -> 非法”边沿触发（持续非法不重复，首次进入初始非法不触发）。
+8. 同步更新文档：`manual-test-checklist.md`（D5 P1 状态由“未实现前置”更新为“已实现，待端上回归”）。
+验证:
+1. `npm run ui:check` 通过（2026-03-12）。
+2. 代码路径核对通过（动作锁定、匹配分支、消息占位页跳转/返回重算、跨日重算定时器均已接入）。
+风险:
+1. D5 时间边界与生命周期场景（跨 00:00、进程被杀后恢复、推荐池耗尽跨日）仍需 HBuilderX 端上回归闭环。
+2. 本轮未执行真机/模拟器全量场景，只完成静态门禁与代码路径确认。
+下一步:
+1. 按 `manual-test-checklist.md` 第 8 章执行 HBuilderX 端上回归，并回填通过/不通过结论。
+2. 回归完成后更新 `release-prep-checklist.md` 封版记录字段。
+
+日期: 2026-03-12  
+里程碑: D5 P2 端上回归闭环（验证条目全部通过）  
+完成项:
+1. 按 `manual-test-checklist.md` 第 8 章执行 D5 P1 端上验证，回归条目全部通过（HBuilderX）。
+2. `manual-test-checklist.md` 状态回填完成：第 8 章统一更新为“已端上验证通过（HBuilderX，2026-03-12）”。
+3. 关闭 D5 P1 阶段“待端上验证”状态，验证结论与实现状态一致。
+验证:
+1. 用户确认：验证条目均通过。
+2. 文档核对通过：手测清单与过程记录状态一致。
+风险:
+1. 当前无新增阻塞风险。
+下一步:
+1. 若进入封版阶段，继续回填 `release-prep-checklist.md` 的封版 commit/版本/责任人字段。
+
+日期: 2026-03-12  
+里程碑: D5 P2.1 封版清单状态收口（回填完成）  
+完成项:
+1. 更新 `release-prep-checklist.md` 适用范围到 D5 P1，并同步更新时间为 2026-03-12。
+2. 清空封版记录中的“待回填”字段，回填当前验证基线 commit、版本、日期、结论与责任人。
+3. 内测结论与手测清单保持一致：D5 P1 验证条目全部通过（HBuilderX）。
+验证:
+1. 文档交叉核对通过（`manual-test-checklist.md` / `process.md` / `release-prep-checklist.md` 状态一致）。
+风险:
+1. 当前记录的 commit 为“验证基线”，尚未执行最终封版提交与正式打包产物归档。
+下一步:
+1. 执行最终封版提交后，将 `release-prep-checklist.md` 的封版 commit 更新为最终封版提交号。

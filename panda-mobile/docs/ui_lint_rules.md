@@ -126,14 +126,14 @@ rg -n --glob '*.{uvue,vue}' 'style\\s*=\\s*\"[^\"]*(#|rgba?\\(|[0-9]+px)' .
 
 ---
 
-## 9. CI 门禁建议
+## 9. CI 执行建议（MVP）
 
-合并前至少执行:
+建议在合并前执行:
 
 1. `ui-lint`（stylelint + eslint）
 2. `ui-token-scan`（rg 兜底）
 
-任一失败即阻止合并。
+MVP 阶段以上检查结果用于质量提示，不作为阻断门禁。
 
 ---
 

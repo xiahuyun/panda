@@ -73,7 +73,7 @@
 3. `ProfileCard`
    - 使用 `component.card.profile.*` token。
 4. `ChatBubble`
-   - 非 MVP 组件，当前主分支不实现。
+   - 非 MVP 组件，可保留文件但不接入主流程。
    - 后续启用时再按 `component.chatBubble.*` token 落地。
 
 ---
@@ -86,6 +86,7 @@
 4. 空态必须包含:
    - 当前状态说明
    - 下一步建议动作（按钮或链接）
+   - MVP 消息占位页可将“系统返回”视为下一步动作，不强制新增显式按钮/链接
 
 ---
 

@@ -186,9 +186,9 @@ component.card.profile.radius: "{radius.lg}"
 component.card.profile.bg: "{semantic.bg.surface}"
 component.card.profile.shadow: "{shadow.sm}"
 
-component.chat.bubble.radius: 16
-component.chat.bubble.incoming.bg: "{semantic.chat.incoming.bg}"
-component.chat.bubble.outgoing.bg: "{semantic.chat.outgoing.bg}"
+component.chatBubble.radius: 16
+component.chatBubble.incomingBg: "{semantic.chat.incoming.bg}"
+component.chatBubble.outgoingBg: "{semantic.chat.outgoing.bg}"
 ```
 
 ---

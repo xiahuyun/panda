@@ -1,17 +1,22 @@
 {
-  "schema_version": "1.4.1",
-  "generated_at": "2026-03-11T17:20:00+08:00",
+  "schema_version": "1.5.0",
+  "generated_at": "2026-03-12T17:10:00+08:00",
   "source": {
     "provider": "stitch",
     "project_id": "14672720946715964150",
     "project_url": "https://stitch.withgoogle.com/projects/14672720946715964150",
-    "mode": "mvp_scoped",
-    "notes": "Schema narrowed to MVP: login -> affinity wall active only. Updated with clarification decisions on 2026-03-11."
+    "mode": "mvp_scoped_d5_p0",
+    "notes": "Schema updated to D5 P0.8: clarify initial-invalid no blocked event, previous-day-last definition as last assigned profile, fallback allows repeat when no alternative, message back recomputes by current date, and non-MVP chat components stay unwired in main flow."
   },
   "mvp_scope": {
-    "include_page_keys": ["login", "affinity_wall_active"],
-    "exclude_page_keys": ["affinity_wall_waiting", "chat", "end_connection_modal", "affinity_hint_modal", "icebreaker_wide"],
-    "exclude_reason": "Out of MVP; avoid non-essential implementation."
+    "include_page_keys": ["login", "affinity_wall_active", "message_placeholder"],
+    "exclude_page_keys": ["chat", "end_connection_modal", "affinity_hint_modal", "icebreaker_wide"],
+    "exclude_reason": "Out of D5 P0 MVP; keep message page as placeholder only."
+  },
+  "mvp_guardrails": {
+    "non_mvp_chat_components_kept_but_unwired_in_main_flow": true,
+    "forbid_chat_component_imports_in_login_affinity_message_pages": true,
+    "forbid_main_flow_navigation_to_non_mvp_chat_routes": true
   },
   "token_reference": {
     "file": "tokens/panda.tokens.json"
@@ -24,6 +29,10 @@
     {
       "route": "/pages/affinity/active",
       "page_key": "affinity_wall_active"
+    },
+    {
+      "route": "/pages/message/index",
+      "page_key": "message_placeholder"
     }
   ],
   "page_schemas": {
@@ -65,6 +74,7 @@
         "phone_segment_restriction": false,
         "code_length": 6,
         "pass_code": "123456",
+        "mock_user_id_strategy": "mock_user_${phone}",
         "error_text": "验证码错误",
         "error_modal_auto_close_ms": 3000
       },
@@ -101,8 +111,9 @@
       "analytics_rules": {
         "mode": "local_print_only",
         "remote_upload": false,
-        "login_submit_blocked_trigger": "input_is_invalid",
-        "login_submit_blocked_deduplicate": false
+        "login_submit_blocked_trigger": "input_transition_valid_to_invalid",
+        "login_submit_blocked_repeat_when_stays_invalid": false,
+        "login_submit_blocked_fire_on_initial_invalid": false
       }
     },
     "affinity_wall_active": {
@@ -126,6 +137,13 @@
             { "type": "info_card", "key": "recommend_reason" },
             { "type": "badge", "key": "online_status" }
           ]
+        },
+        {
+          "id": "action_bar",
+          "nodes": [
+            { "type": "button", "key": "wait_button", "label": "再等等", "variant": "secondary" },
+            { "type": "button", "key": "interested_button", "label": "感兴趣", "variant": "primary" }
+          ]
         }
       ],
       "states": ["loading", "active"],
@@ -137,7 +155,22 @@
         "source": "local_mock_pool",
         "source_file": "panda-mobile/mock/affinity-profiles.mock.json",
         "min_pool_size": 3,
-        "selection_strategy": "random_one_per_login",
+        "selection_strategy": "stable_unseen_per_user_per_day",
+        "selection_formula": "pick_stable_from_unseen_pool(user_id, date_key, cycle_history)",
+        "selection_algorithm_flexibility": "implementation_defined_if_behavior_is_correct",
+        "selection_user_id_source": "session_user.userId",
+        "selection_key_fields": ["user_id", "date_key"],
+        "historical_dedup_per_user": true,
+        "cycle_history_store": "persistent_local_by_user",
+        "cycle_history_reset_cycle": "reset_at_next_local_00_00_when_unseen_pool_exhausted",
+        "lifetime_history_store": "persistent_local_by_user",
+        "lifetime_history_clear_condition": "only_on_uninstall_or_clear_app_data",
+        "unseen_pool_exhausted_behavior": "keep_current_profile_until_next_day_reset",
+        "next_cycle_first_profile_prefer_not_equal_previous_day_last": true,
+        "previous_day_last_profile_basis": "last_successfully_assigned_profile_for_user",
+        "next_cycle_first_profile_fallback_when_no_alternative": "allow_repeat_previous_day_last",
+        "forbid_repeat_recommendation": true,
+        "forbid_repeat_recommendation_scope": "within_cycle_history",
         "avatar_render_mode": "placeholder_only",
         "avatar_placeholder_path": "/static/logo.png",
         "profile": {
@@ -152,9 +185,81 @@
       },
       "interaction_rules": {
         "membership_entry_clickable": false,
-        "membership_entry_style": "disabled_gray"
-      }
+        "membership_entry_style": "disabled_gray",
+        "same_day_single_profile": true,
+        "same_day_profile_consistent_across_relogin": true,
+        "day_boundary_basis": "device_local_natural_day",
+        "day_boundary_reset_trigger": "auto_at_local_00_00",
+        "day_boundary_reset_apply_mode": "immediate_while_page_active",
+        "daily_action_lock_after_first_click": true,
+        "daily_action_change_allowed": false,
+        "daily_action_lock_persistence": "memory_only_clear_on_app_kill",
+        "locked_action_feedback": "silent_ignore",
+        "wait_action_refresh_profile": false,
+        "interested_action_refresh_profile": false,
+        "wait_action_next_recommend_on_next_day": true,
+        "wait_action_feedback": "toast:已为你安排明日推荐",
+        "interested_action_match_result_mode": "mock_fixed_rule",
+        "interested_action_match_fixed_rule": "profile_id_eq_p_001",
+        "interested_action_navigate_on_match": "/pages/message/index",
+        "interested_action_conversation_id_formula": "profile_id + '_' + date_key",
+        "interested_action_stay_on_unmatch": true,
+        "interested_action_unmatch_feedback": "toast:今日匹配已用完，请明日再来"
+      },
+      "events": [
+        { "on": "tap_wait_button", "action": "record_daily_action:wait" },
+        { "on": "tap_wait_button", "action": "toast:已为你安排明日推荐" },
+        { "on": "tap_interested_button", "action": "record_daily_action:interested" },
+        { "on": "tap_interested_button", "action": "mock_match_and_maybe_navigate_message" },
+        { "on": "tap_action_when_locked", "action": "record_daily_action_locked_event_silent" },
+        { "on": "interested_unmatched", "action": "toast:今日匹配已用完，请明日再来" }
+      ]
+    },
+    "message_placeholder": {
+      "source_screen_title": "小熊交友 - 聊天页面 (底部输入框版)",
+      "layout": "single_column",
+      "sections": [
+        {
+          "id": "header",
+          "nodes": [
+            { "type": "text", "key": "title", "value": "消息" }
+          ]
+        },
+        {
+          "id": "content",
+          "nodes": [
+            { "type": "placeholder", "key": "message_placeholder_text", "value": "消息功能建设中" }
+          ]
+        }
+      ],
+      "states": ["placeholder"],
+      "interaction_rules": {
+        "send_enabled": false,
+        "conversation_list_enabled": false,
+        "back_target_route": "/pages/affinity/active",
+        "back_target_behavior": "recompute_affinity_card_by_current_date",
+        "cross_day_special_handling_in_mvp": false,
+        "recompute_affinity_on_back_by_current_date": true
+      },
+      "events": [
+        { "on": "page_view", "action": "record_message_placeholder_page_view" },
+        { "on": "back", "action": "navigate_back_to_affinity_and_recompute_current_date_card" }
+      ]
     }
+  },
+  "analytics_extension": {
+    "event_names": [
+      "affinity_wait_click",
+      "affinity_interested_click",
+      "affinity_daily_action_locked",
+      "affinity_match_result",
+      "affinity_unmatched_toast_show",
+      "nav_to_message_placeholder",
+      "message_placeholder_page_view",
+      "nav_back_to_affinity_active"
+    ],
+    "date_key_basis": "device_local_natural_day",
+    "conversation_id_formula": "profile_id + '_' + date_key"
   },
   "flow_schema": {
     "start_route": "/pages/auth/login",
@@ -162,7 +267,12 @@
       { "step": 1, "screen": "login", "label": "Open app and show login page" },
       { "step": 2, "screen": "login", "label": "Enter phone + 6-digit code; invalid input disables submit" },
       { "step": 3, "screen": "login", "label": "Mock validate; fail shows 3s non-dismissible modal with full-screen interaction lock" },
-      { "step": 4, "screen": "affinity_wall_active", "label": "On success navigate and render one profile randomly from local mock pool" }
+      { "step": 4, "screen": "affinity_wall_active", "label": "On success navigate and render one profile from local mock pool with same-day stable selection" },
+      { "step": 5, "screen": "affinity_wall_active", "label": "Tap wait/interested; do not refresh profile within the same day" },
+      { "step": 6, "screen": "message_placeholder", "label": "If mock matched, navigate to message placeholder page with derived conversationId" },
+      { "step": 7, "screen": "affinity_wall_active", "label": "If unseen pool is exhausted, keep current profile and reset history at next local 00:00 to start a new cycle; first card should prefer not equal previous-day last card, and may fallback to repeat if no alternative exists" },
+      { "step": 8, "screen": "affinity_wall_active", "label": "If user stays on affinity page across local 00:00, immediately apply reset and rotate profile without waiting for onShow" },
+      { "step": 9, "screen": "affinity_wall_active", "label": "When returning from message placeholder, recompute affinity card immediately using current local date key" }
     ]
   }
 }

@@ -1,4 +1,4 @@
-# Panda Mobile Mock Contract (V0.5)
+# Panda Mobile Mock Contract (V0.6)
 
 ## 1. 当前约束
 
@@ -31,6 +31,7 @@
 3. `code` 必须为 6 位数字；
 4. 测试通过码固定为 `123456`；
 5. 其余情况统一视为失败：`验证码错误`。
+6. 登录成功返回的 `userId` 需可稳定标识当前用户（MVP 约定：`mock_user_${phone}`）。
 
 成功返回（示例）：
 
@@ -38,7 +39,7 @@
 {
   "success": true,
   "data": {
-    "userId": "mock_user_001",
+    "userId": "mock_user_13800138000",
     "nickname": "熊猫同学"
   }
 }
@@ -49,7 +50,7 @@
 ```json
 {
   "sessionUser": {
-    "userId": "mock_user_001",
+    "userId": "mock_user_13800138000",
     "nickname": "熊猫同学"
   }
 }
@@ -94,9 +95,10 @@
 数据来源规则：
 1. 本地维护 `profile` mock 池（最小规模 3 条）；
 2. mock 池文件路径：`panda-mobile/mock/affinity-profiles.mock.json`；
-3. 每次登录成功后从 mock 池随机选择 1 条展示；
-4. 单次会话内不要求去重。
-5. MVP 头像统一占位，使用 `/static/logo.png`。
+3. 同一自然日内按稳定策略选择 1 条展示（`stable_pick_unseen(userId, dateKey, cycleHistory)`），重新登录不换卡；
+4. 推荐去重默认基于 `cycleHistory`：同一循环内已推荐过的 `profileId` 不再重复推荐；
+5. 次日 00:00 进入新循环后，首个推荐对象优先不与上一自然日最后展示对象相同；
+6. MVP 头像统一占位，使用 `/static/logo.png`。
 
 ## 5. 默认时长建议（MVP）
 
@@ -109,7 +111,102 @@
 1. 保持 service interface 不变，替换实现层。
 2. 联调前补充正式 API Contract（错误码、鉴权、限流、幂等）。
 
-## 7. MVP 辅助说明
+## 7. 缘分墙动作 Mock 契约（D5 P0）
+
+### 7.1 今日推荐约束
+
+1. 同一自然日内，用户仅查看 1 个推荐对象。
+2. 当天点击 `再等等` 或 `感兴趣` 后，不刷新下一张推荐卡片。
+3. 推荐卡片在下一自然日才允许切换为新对象（且需为该用户当前循环内未推荐对象）。
+4. 日期边界按设备本地自然日（本地时间 00:00）计算。
+5. 当天动作一经点击即锁定，不允许改选（`wait` 与 `interested` 互斥）。
+6. 同一自然日内重新登录后，仍展示同一推荐对象（不换卡）。
+7. 推荐对象选择策略为 `stable_pick_unseen(userId, dateKey, cycleHistory)`，同时满足“同日稳定”与“当前循环不重复推荐”。
+8. `stable_pick` 的 `userId` 必须取自当前内存会话中的 `sessionUser.userId`。
+9. 动作锁定仅保存在当前 App 进程内存；App 进程被杀后不保留。
+10. 到设备本地时间 00:00 自动重置“当日推荐对象 + 动作锁定”。
+11. 若用户停留在缘分墙页面，00:00 到点后必须立即重置并切换到历史未推荐的新卡片（不等待下次交互或 `onShow`）。
+12. 若同一用户的未推荐池耗尽：不在当日立即清空 `cycleHistory`，待下一天 00:00 重置 `cycleHistory` 后重新循环推荐。
+13. 维护两份历史：
+   - `cycleHistory`: 用于推荐去重，按第 12 条在循环切换时重置；按 `userId` 本地持久化。
+   - `lifetimeHistory`: 用于长期留痕，不参与当日去重判定；按 `userId` 本地持久化。
+14. `lifetimeHistory` 仅在“应用卸载/清除应用数据”时彻底清空；常规前后台切换、重启不清空。
+15. `stable_pick_unseen` 具体算法实现可自定，但必须满足本节所有行为约束。
+16. 次日 00:00 触发新循环后，首个推荐对象优先不等于上一自然日最后展示对象。
+17. “上一自然日最后展示对象”定义为“系统最后一次成功分配给该用户的推荐对象”（不依赖用户当时停留页面）。
+18. 若新循环可选池无法满足“首卡 != 上一自然日最后展示对象”，允许降级为重复该对象，不阻断推荐流程。
+
+### 7.2 动作输入
+
+```json
+{
+  "userId": "mock_user_${phone}",
+  "profileId": "p_001",
+  "action": "wait|interested",
+  "dateKey": "2026-03-11"
+}
+```
+
+### 7.3 `再等等` 返回（示例）
+
+```json
+{
+  "success": true,
+  "data": {
+    "action": "wait",
+    "keepCurrentProfile": true,
+    "nextRecommendDate": "2026-03-12",
+    "toast": "已为你安排明日推荐"
+  }
+}
+```
+
+规则：
+1. 记录当天动作为 `wait`。
+2. 页面保留当前卡片，不触发刷新。
+3. 当天动作锁定后不允许切换为 `interested`。
+4. toast 文案在 MVP 固定为 `已为你安排明日推荐`。
+
+### 7.4 `感兴趣` 返回（示例）
+
+```json
+{
+  "success": true,
+  "data": {
+    "action": "interested",
+    "matched": true,
+    "conversationId": "p_001_2026-03-11",
+    "nextRoute": "/pages/message/index"
+  }
+}
+```
+
+规则：
+1. 记录当天动作为 `interested`。
+2. `matched` 使用固定规则：`profileId == "p_001"` 时为 `true`，否则为 `false`。
+3. `matched=true` 时跳转消息栏占位页；`matched=false` 时停留当前页并 toast：`今日匹配已用完，请明日再来`。
+4. 无论 `matched` 结果如何，当天都不刷新下一张推荐卡片。
+5. 当天动作已锁定后再次点击动作按钮：静默忽略（不弹 toast、不改动状态）。
+6. `conversationId` 生成规则固定为 `profileId + "_" + dateKey`（例如 `p_001_2026-03-11`）。
+
+## 8. 消息栏占位页契约（D5 P0）
+
+1. 页面路由：`/pages/message/index`。
+2. MVP 仅做占位展示，不接真实消息列表与发送能力。
+3. 可接受参数：
+
+```json
+{
+  "conversationId": "p_001_2026-03-11"
+}
+```
+
+4. 占位文案固定为：`消息功能建设中`。
+5. 从消息栏占位页返回时，回到缘分墙并按当前 `dateKey` 立即重算应展示卡片。
+6. MVP 阶段消息占位页不处理跨 00:00 的特殊逻辑。
+7. 消息占位页将系统返回视为“下一步动作”，MVP 不强制新增显式按钮/链接。
+
+## 9. MVP 辅助说明
 
 1. 协议入口点击 toast：`用户协议建设中`。
 2. 隐私入口点击 toast：`隐私政策建设中`。
