@@ -18,15 +18,28 @@
         :meta="profile.meta"
         :bio="profile.bio"
       />
+
       <view class="reason-card">
         <text class="reason-card__title">推荐理由</text>
         <text class="reason-card__text">{{ profile.reason }}</text>
       </view>
+
       <view class="online-row">
         <view :class="profile.isOnline ? 'online-dot online-dot--on' : 'online-dot'" />
         <text class="online-text">{{ profile.isOnline ? '在线' : '离线' }}</text>
       </view>
-      <text class="session-text">当前用户：{{ nickname }}</text>
+
+      <view class="action-row">
+        <button class="action-button action-button--wait" @tap="onTapWait">
+          <text class="action-button__text action-button__text--wait">再等等</text>
+        </button>
+        <button class="action-button action-button--interested" @tap="onTapInterested">
+          <text class="action-button__text action-button__text--interested">感兴趣</text>
+        </button>
+      </view>
+
+      <text v-if="actionLock == 'wait'" class="lock-tip">今日已选择：再等等</text>
+      <text v-if="actionLock == 'interested'" class="lock-tip">今日已选择：感兴趣</text>
     </view>
   </view>
 </template>
@@ -35,10 +48,27 @@
 import ProfileCard from "../../components/ProfileCard.uvue"
 import { getSessionUser } from "../../services/session/session-store.uts"
 import { logLocalEvent } from "../../services/analytics/local-event-logger.uts"
-import { fetchRandomAffinityProfile } from "../../services/mock/affinity-wall-service.uts"
+import {
+  WAIT_TOAST_TEXT,
+  UNMATCHED_TOAST_TEXT,
+  fetchAffinityProfile,
+  getDailyActionLock,
+  getLocalDateKey,
+  submitAffinityAction
+} from "../../services/mock/affinity-wall-service.uts"
 
-const nickname = ref("游客")
+const LOGIN_PAGE_URL = "/pages/auth/login"
+const MESSAGE_PAGE_URL = "/pages/message/index"
+const RULE_PROFILE_ID_EQ_P001 = "profile_id_eq_p_001"
+
 const state = ref("loading")
+const userId = ref("")
+const dateKey = ref("")
+const actionLock = ref("")
+const shouldTrackBackFromMessage = ref(false)
+const hasLoaded = ref(false)
+const midnightTimerId = ref(0)
+
 const profile = ref({
   id: "",
   name: "",
@@ -49,21 +79,209 @@ const profile = ref({
   isOnline: false
 })
 
-const loadRandomProfile = () => {
-  state.value = "loading"
-  fetchRandomAffinityProfile().then((data: any) => {
-    profile.value = data
-    state.value = "active"
+const showMessage = (text: string) => {
+  uni.showToast({
+    title: text,
+    icon: "none"
   })
 }
 
+const ensureSessionUser = (): boolean => {
+  const sessionUser = getSessionUser()
+  if (sessionUser == null || sessionUser.userId == null || sessionUser.userId.length == 0) {
+    uni.redirectTo({
+      url: LOGIN_PAGE_URL
+    })
+    return false
+  }
+  userId.value = sessionUser.userId
+  return true
+}
+
+const syncActionLock = () => {
+  if (userId.value.length == 0 || dateKey.value.length == 0) {
+    actionLock.value = ""
+    return
+  }
+  actionLock.value = getDailyActionLock(userId.value, dateKey.value)
+}
+
+const loadProfile = () => {
+  if (userId.value.length == 0) {
+    return
+  }
+  state.value = "loading"
+  fetchAffinityProfile(userId.value)
+    .then((result: any) => {
+      profile.value = result.profile
+      dateKey.value = result.dateKey
+      syncActionLock()
+      state.value = "active"
+      hasLoaded.value = true
+    })
+    .catch((error) => {
+      console.error("load affinity profile failed", error)
+      showMessage("推荐加载失败，请稍后重试")
+      if (profile.value.id.length > 0) {
+        state.value = "active"
+      }
+    })
+}
+
+const getMillisecondsToNextMidnight = (): number => {
+  const now = new Date()
+  const nextMidnight = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+    0,
+    0,
+    0,
+    50
+  )
+  return nextMidnight.getTime() - now.getTime()
+}
+
+const scheduleMidnightRefresh = () => {
+  if (midnightTimerId.value != 0) {
+    clearTimeout(midnightTimerId.value)
+  }
+  const delay = getMillisecondsToNextMidnight()
+  midnightTimerId.value = setTimeout(() => {
+    loadProfile()
+    scheduleMidnightRefresh()
+  }, delay)
+}
+
+const recordLockedAttempt = (attemptedAction: string) => {
+  if (actionLock.value.length == 0) {
+    return
+  }
+  logLocalEvent("affinity_daily_action_locked", {
+    date_key: dateKey.value,
+    locked_action: actionLock.value,
+    attempted_action: attemptedAction,
+    ui_feedback: "silent_ignore"
+  })
+}
+
+const onTapWait = () => {
+  if (state.value != "active" || profile.value.id.length == 0) {
+    return
+  }
+  if (getLocalDateKey() != dateKey.value) {
+    loadProfile()
+    return
+  }
+  if (actionLock.value.length > 0) {
+    recordLockedAttempt("wait")
+    return
+  }
+
+  logLocalEvent("affinity_wait_click", {
+    profile_id: profile.value.id,
+    date_key: dateKey.value
+  })
+
+  const result = submitAffinityAction(userId.value, profile.value.id, "wait", dateKey.value)
+  if (result.ignored) {
+    recordLockedAttempt("wait")
+    return
+  }
+
+  actionLock.value = result.action
+  showMessage(WAIT_TOAST_TEXT)
+}
+
+const onTapInterested = () => {
+  if (state.value != "active" || profile.value.id.length == 0) {
+    return
+  }
+  if (getLocalDateKey() != dateKey.value) {
+    loadProfile()
+    return
+  }
+  if (actionLock.value.length > 0) {
+    recordLockedAttempt("interested")
+    return
+  }
+
+  logLocalEvent("affinity_interested_click", {
+    profile_id: profile.value.id,
+    date_key: dateKey.value
+  })
+
+  const result = submitAffinityAction(userId.value, profile.value.id, "interested", dateKey.value)
+  if (result.ignored) {
+    recordLockedAttempt("interested")
+    return
+  }
+
+  actionLock.value = result.action
+
+  logLocalEvent("affinity_match_result", {
+    profile_id: profile.value.id,
+    matched: result.matched,
+    rule: RULE_PROFILE_ID_EQ_P001
+  })
+
+  if (result.matched) {
+    logLocalEvent("nav_to_message_placeholder", {
+      from: "affinity_active",
+      to: "message_placeholder",
+      conversation_id: result.conversationId
+    })
+    shouldTrackBackFromMessage.value = true
+    uni.navigateTo({
+      url: `${MESSAGE_PAGE_URL}?conversationId=${result.conversationId}`
+    })
+    return
+  }
+
+  logLocalEvent("affinity_unmatched_toast_show", {
+    message: UNMATCHED_TOAST_TEXT
+  })
+  showMessage(UNMATCHED_TOAST_TEXT)
+}
+
 onLoad(() => {
-  const user = getSessionUser()
-  if (user != null && user.nickname != null) {
-    nickname.value = user.nickname
+  if (!ensureSessionUser()) {
+    return
   }
   logLocalEvent("affinity_active_page_view", { page_key: "affinity_active" })
-  loadRandomProfile()
+  loadProfile()
+  scheduleMidnightRefresh()
+})
+
+onShow(() => {
+  if (!hasLoaded.value || userId.value.length == 0) {
+    return
+  }
+
+  if (shouldTrackBackFromMessage.value) {
+    shouldTrackBackFromMessage.value = false
+    logLocalEvent("nav_back_to_affinity_active", {
+      from: "message_placeholder",
+      to: "affinity_active"
+    })
+    loadProfile()
+    return
+  }
+
+  const currentDateKey = getLocalDateKey()
+  if (currentDateKey != dateKey.value) {
+    loadProfile()
+    return
+  }
+
+  syncActionLock()
+})
+
+onUnload(() => {
+  if (midnightTimerId.value != 0) {
+    clearTimeout(midnightTimerId.value)
+    midnightTimerId.value = 0
+  }
 })
 </script>
 
@@ -160,8 +378,44 @@ onLoad(() => {
   font-size: var(--font-size-sm);
 }
 
-.session-text {
+.action-row {
+  flex-direction: row;
+  gap: var(--space-3);
+}
+
+.action-button {
+  flex: 1;
+  height: var(--component-button-primary-height);
+  border-radius: var(--component-button-primary-radius);
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.action-button--wait {
+  background-color: var(--semantic-bg-surface-muted);
+}
+
+.action-button--interested {
+  background-color: var(--component-button-primary-bg);
+}
+
+.action-button__text {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+}
+
+.action-button__text--wait {
+  color: var(--semantic-text-secondary);
+}
+
+.action-button__text--interested {
+  color: var(--component-button-primary-text);
+}
+
+.lock-tip {
   color: var(--semantic-text-secondary);
   font-size: var(--font-size-sm);
+  text-align: center;
 }
 </style>

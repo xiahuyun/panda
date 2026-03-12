@@ -33,10 +33,9 @@ export const validateLoginMock = (phone: string, code: string): Promise<any> => 
         return
       }
       resolve({
-        userId: "mock_user_001",
+        userId: `mock_user_${phone}`,
         nickname: "熊猫同学"
       })
     }, MOCK_LOGIN_DELAY_MS)
   })
 }
-

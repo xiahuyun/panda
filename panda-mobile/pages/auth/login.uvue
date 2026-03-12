@@ -67,6 +67,7 @@ const errorModalText = ref("验证码错误")
 const errorTimerId = ref(0)
 const lastTermsToastAt = ref(0)
 const lastPrivacyToastAt = ref(0)
+const lastFormValidity = ref(false)
 
 const isFormValid = computed((): boolean => {
   return isLoginFormValid(phone.value, code.value)
@@ -84,23 +85,25 @@ const submitText = computed((): string => {
   return isSubmitting.value ? "登录中..." : "登录 / 注册"
 })
 
-const emitBlockedWhenInvalid = () => {
-  if (!isLoginFormValid(phone.value, code.value)) {
+const updateFormValidityAndMaybeEmitBlocked = () => {
+  const nextFormValidity = isLoginFormValid(phone.value, code.value)
+  if (lastFormValidity.value && !nextFormValidity) {
     logLocalEvent("login_submit_blocked", {
       phone_length: phone.value.length,
       code_length: code.value.length
     })
   }
+  lastFormValidity.value = nextFormValidity
 }
 
 const onPhoneInput = (value: string) => {
   phone.value = filterDigits(value)
-  emitBlockedWhenInvalid()
+  updateFormValidityAndMaybeEmitBlocked()
 }
 
 const onCodeInput = (value: string) => {
   code.value = filterDigits(value)
-  emitBlockedWhenInvalid()
+  updateFormValidityAndMaybeEmitBlocked()
 }
 
 const navigateToAffinityActive = () => {
@@ -190,6 +193,7 @@ const onTapPrivacy = () => {
 }
 
 onLoad(() => {
+  lastFormValidity.value = isLoginFormValid(phone.value, code.value)
   logLocalEvent("login_page_view", { page_key: "login" })
 })
 

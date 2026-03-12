@@ -1,0 +1,46 @@
+<template>
+  <view class="page">
+    <view class="placeholder-card">
+      <text class="placeholder-title">消息</text>
+      <text class="placeholder-text">消息功能建设中</text>
+    </view>
+  </view>
+</template>
+
+<script setup lang="uts">
+import { logLocalEvent } from "../../services/analytics/local-event-logger.uts"
+
+onLoad(() => {
+  logLocalEvent("message_placeholder_page_view", {
+    page_key: "message_placeholder"
+  })
+})
+</script>
+
+<style>
+.page {
+  min-height: 100%;
+  padding: var(--space-4);
+  background-color: var(--semantic-bg-app);
+}
+
+.placeholder-card {
+  margin-top: var(--space-8);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background-color: var(--semantic-bg-surface);
+  align-items: center;
+}
+
+.placeholder-title {
+  color: var(--semantic-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.placeholder-text {
+  margin-top: var(--space-3);
+  color: var(--semantic-text-secondary);
+  font-size: var(--font-size-md);
+}
+</style>

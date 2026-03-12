@@ -1,15 +1,361 @@
-const AFFINITY_LOADING_DELAY_MS = 600
 import { AFFINITY_PROFILES_MOCK } from "../../mock/affinity-profiles.mock.uts"
 
-const randomIndex = (max: number): number => {
-  return Math.floor(Math.random() * max)
+const AFFINITY_LOADING_DELAY_MS = 600
+const STORAGE_KEY_PREFIX = "panda_affinity_state_v1_"
+const MAX_DAILY_ASSIGNMENTS = 40
+const ACTION_WAIT = "wait"
+const ACTION_INTERESTED = "interested"
+
+export const WAIT_TOAST_TEXT = "已为你安排明日推荐"
+export const UNMATCHED_TOAST_TEXT = "今日匹配已用完，请明日再来"
+
+let actionLocks: any = {}
+
+const createDefaultUserState = (): any => {
+  return {
+    cycleHistory: [],
+    lifetimeHistory: [],
+    dailyAssignments: {},
+    pendingCycleResetDateKey: "",
+    lastAssignedProfileId: "",
+    lastAssignedDateKey: ""
+  }
 }
 
-export const fetchRandomAffinityProfile = (): Promise<any> => {
-  return new Promise((resolve) => {
+const buildUserStorageKey = (userId: string): string => {
+  return `${STORAGE_KEY_PREFIX}${userId}`
+}
+
+const containsString = (list: Array<any>, value: string): boolean => {
+  for (let i = 0; i < list.length; i += 1) {
+    if (list[i] == value) {
+      return true
+    }
+  }
+  return false
+}
+
+const normalizeStringArray = (value: any): Array<any> => {
+  const result: Array<any> = []
+  if (!Array.isArray(value)) {
+    return result
+  }
+  for (let i = 0; i < value.length; i += 1) {
+    const item = value[i]
+    if (typeof item == "string" && item.length > 0 && !containsString(result, item)) {
+      result.push(item)
+    }
+  }
+  return result
+}
+
+const normalizeDailyAssignments = (value: any): any => {
+  const result: any = {}
+  if (value == null || typeof value != "object") {
+    return result
+  }
+  const keys = Object.keys(value)
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i]
+    const profileId = value[key]
+    if (typeof key == "string" && key.length > 0 && typeof profileId == "string" && profileId.length > 0) {
+      result[key] = profileId
+    }
+  }
+  return result
+}
+
+const parseUserState = (raw: any): any => {
+  let parsed: any = null
+  if (typeof raw == "string" && raw.length > 0) {
+    try {
+      parsed = JSON.parse(raw)
+    } catch (error) {
+      parsed = null
+    }
+  } else if (raw != null && typeof raw == "object") {
+    parsed = raw
+  }
+
+  if (parsed == null || typeof parsed != "object") {
+    return createDefaultUserState()
+  }
+
+  return {
+    cycleHistory: normalizeStringArray(parsed.cycleHistory),
+    lifetimeHistory: normalizeStringArray(parsed.lifetimeHistory),
+    dailyAssignments: normalizeDailyAssignments(parsed.dailyAssignments),
+    pendingCycleResetDateKey: typeof parsed.pendingCycleResetDateKey == "string" ? parsed.pendingCycleResetDateKey : "",
+    lastAssignedProfileId: typeof parsed.lastAssignedProfileId == "string" ? parsed.lastAssignedProfileId : "",
+    lastAssignedDateKey: typeof parsed.lastAssignedDateKey == "string" ? parsed.lastAssignedDateKey : ""
+  }
+}
+
+const loadUserState = (userId: string): any => {
+  let raw: any = null
+  try {
+    raw = uni.getStorageSync(buildUserStorageKey(userId))
+  } catch (error) {
+    raw = null
+  }
+  return parseUserState(raw)
+}
+
+const pruneDailyAssignments = (state: any): void => {
+  const keys = Object.keys(state.dailyAssignments)
+  if (keys.length <= MAX_DAILY_ASSIGNMENTS) {
+    return
+  }
+  keys.sort()
+  const removeCount = keys.length - MAX_DAILY_ASSIGNMENTS
+  for (let i = 0; i < removeCount; i += 1) {
+    delete state.dailyAssignments[keys[i]]
+  }
+}
+
+const saveUserState = (userId: string, state: any): void => {
+  pruneDailyAssignments(state)
+  try {
+    uni.setStorageSync(buildUserStorageKey(userId), JSON.stringify(state))
+  } catch (error) {
+    console.error("save affinity user state failed", error)
+  }
+}
+
+const toTwoDigits = (value: number): string => {
+  if (value < 10) {
+    return `0${value}`
+  }
+  return `${value}`
+}
+
+export const getLocalDateKey = (): string => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = toTwoDigits(now.getMonth() + 1)
+  const day = toTwoDigits(now.getDate())
+  return `${year}-${month}-${day}`
+}
+
+const getDateKeyFromDate = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = toTwoDigits(date.getMonth() + 1)
+  const day = toTwoDigits(date.getDate())
+  return `${year}-${month}-${day}`
+}
+
+const getNextDateKey = (dateKey: string): string => {
+  const parts = dateKey.split("-")
+  if (parts.length != 3) {
+    return getLocalDateKey()
+  }
+  const year = Number(parts[0])
+  const month = Number(parts[1]) - 1
+  const day = Number(parts[2])
+  const date = new Date(year, month, day)
+  date.setDate(date.getDate() + 1)
+  return getDateKeyFromDate(date)
+}
+
+const buildProfileIds = (): Array<any> => {
+  const ids: Array<any> = []
+  for (let i = 0; i < AFFINITY_PROFILES_MOCK.length; i += 1) {
+    ids.push(AFFINITY_PROFILES_MOCK[i].id)
+  }
+  return ids
+}
+
+const cloneProfile = (profile: any): any => {
+  return {
+    id: profile.id,
+    name: profile.name,
+    avatarUrl: profile.avatarUrl,
+    meta: profile.meta,
+    bio: profile.bio,
+    reason: profile.reason,
+    isOnline: profile.isOnline
+  }
+}
+
+const findProfileById = (profileId: string): any | null => {
+  for (let i = 0; i < AFFINITY_PROFILES_MOCK.length; i += 1) {
+    if (AFFINITY_PROFILES_MOCK[i].id == profileId) {
+      return cloneProfile(AFFINITY_PROFILES_MOCK[i])
+    }
+  }
+  return null
+}
+
+const buildStableSeed = (input: string): number => {
+  let hash = 0
+  for (let i = 0; i < input.length; i += 1) {
+    const code = input.charCodeAt(i)
+    hash = (hash * 31 + code) % 2147483647
+  }
+  return hash
+}
+
+const pickStableProfileId = (candidateIds: Array<any>, userId: string, dateKey: string): string => {
+  if (candidateIds.length == 0) {
+    return ""
+  }
+  const sorted = candidateIds.slice(0).sort()
+  const seed = buildStableSeed(`${userId}|${dateKey}`)
+  const index = seed % sorted.length
+  return sorted[index]
+}
+
+const ensureCycleResetWhenNeeded = (state: any, dateKey: string): void => {
+  if (state.pendingCycleResetDateKey.length == 0) {
+    return
+  }
+  if (dateKey > state.pendingCycleResetDateKey) {
+    state.cycleHistory = []
+    state.pendingCycleResetDateKey = ""
+  }
+}
+
+const assignProfileIdForDate = (userId: string, dateKey: string, state: any): string => {
+  const assignedToday = state.dailyAssignments[dateKey]
+  if (typeof assignedToday == "string" && assignedToday.length > 0) {
+    return assignedToday
+  }
+
+  ensureCycleResetWhenNeeded(state, dateKey)
+
+  const allIds = buildProfileIds()
+  if (allIds.length == 0) {
+    return ""
+  }
+
+  const unseenIds: Array<any> = []
+  for (let i = 0; i < allIds.length; i += 1) {
+    const id = allIds[i]
+    if (!containsString(state.cycleHistory, id)) {
+      unseenIds.push(id)
+    }
+  }
+
+  const previousDayLastProfileId = state.lastAssignedProfileId
+  let assignedProfileId = ""
+
+  if (unseenIds.length == 0) {
+    state.pendingCycleResetDateKey = dateKey
+    if (previousDayLastProfileId.length > 0) {
+      assignedProfileId = previousDayLastProfileId
+    } else {
+      assignedProfileId = pickStableProfileId(allIds, userId, dateKey)
+    }
+  } else {
+    let candidateIds = unseenIds
+    if (state.cycleHistory.length == 0 && previousDayLastProfileId.length > 0) {
+      const firstCardCandidates: Array<any> = []
+      for (let i = 0; i < unseenIds.length; i += 1) {
+        const candidateId = unseenIds[i]
+        if (candidateId != previousDayLastProfileId) {
+          firstCardCandidates.push(candidateId)
+        }
+      }
+      if (firstCardCandidates.length > 0) {
+        candidateIds = firstCardCandidates
+      }
+    }
+
+    assignedProfileId = pickStableProfileId(candidateIds, userId, dateKey)
+    if (!containsString(state.cycleHistory, assignedProfileId)) {
+      state.cycleHistory.push(assignedProfileId)
+    }
+  }
+
+  if (!containsString(state.lifetimeHistory, assignedProfileId)) {
+    state.lifetimeHistory.push(assignedProfileId)
+  }
+
+  state.dailyAssignments[dateKey] = assignedProfileId
+  state.lastAssignedProfileId = assignedProfileId
+  state.lastAssignedDateKey = dateKey
+  return assignedProfileId
+}
+
+const buildActionLockKey = (userId: string, dateKey: string): string => {
+  return `${userId}_${dateKey}`
+}
+
+export const getDailyActionLock = (userId: string, dateKey: string): string => {
+  const key = buildActionLockKey(userId, dateKey)
+  const action = actionLocks[key]
+  if (typeof action == "string") {
+    return action
+  }
+  return ""
+}
+
+const setDailyActionLock = (userId: string, dateKey: string, action: string): void => {
+  actionLocks[buildActionLockKey(userId, dateKey)] = action
+}
+
+export const getConversationId = (profileId: string, dateKey: string): string => {
+  return `${profileId}_${dateKey}`
+}
+
+export const submitAffinityAction = (userId: string, profileId: string, action: string, dateKey: string): any => {
+  const lockedAction = getDailyActionLock(userId, dateKey)
+  if (lockedAction.length > 0) {
+    return {
+      ignored: true,
+      lockedAction: lockedAction,
+      attemptedAction: action
+    }
+  }
+
+  setDailyActionLock(userId, dateKey, action)
+
+  if (action == ACTION_WAIT) {
+    return {
+      ignored: false,
+      action: ACTION_WAIT,
+      keepCurrentProfile: true,
+      nextRecommendDate: getNextDateKey(dateKey),
+      toast: WAIT_TOAST_TEXT
+    }
+  }
+
+  const matched = profileId == "p_001"
+  return {
+    ignored: false,
+    action: ACTION_INTERESTED,
+    matched: matched,
+    conversationId: getConversationId(profileId, dateKey)
+  }
+}
+
+export const fetchAffinityProfile = (userId: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
-      const index = randomIndex(AFFINITY_PROFILES_MOCK.length)
-      resolve(AFFINITY_PROFILES_MOCK[index])
+      if (userId.length == 0) {
+        reject("missing user")
+        return
+      }
+      if (AFFINITY_PROFILES_MOCK.length == 0) {
+        reject("empty profile pool")
+        return
+      }
+
+      const dateKey = getLocalDateKey()
+      const state = loadUserState(userId)
+      const profileId = assignProfileIdForDate(userId, dateKey, state)
+      saveUserState(userId, state)
+
+      const profile = findProfileById(profileId)
+      if (profile == null) {
+        reject("profile not found")
+        return
+      }
+
+      resolve({
+        dateKey: dateKey,
+        profile: profile
+      })
     }, AFFINITY_LOADING_DELAY_MS)
   })
 }
